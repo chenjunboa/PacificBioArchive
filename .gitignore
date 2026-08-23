@@ -15,6 +15,10 @@ test-results/
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+infra/terraform.tfvars
 *.pt
 *.onnx
 mg_detections.json
