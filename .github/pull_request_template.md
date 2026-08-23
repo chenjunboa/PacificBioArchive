@@ -1,42 +1,42 @@
-## Stage and owner
+## 阶段和负责人
 
-- Stage: <!-- Member 2 cloud / Member 3 core / Member 4 UI-release -->
-- Owner:
-- Base tag and commit:
-- Head commit:
+- 阶段：<!-- 第二位云部署 / 第三位后端 / 第四位 UI与发布 -->
+- 负责人：
+- 开始标签和 commit：
+- 当前 commit：
 
-## Scope completed
+## 已完成范围
 
-<!-- List only completed owned outcomes from docs/handoff.md. -->
+<!-- 只列出执行手册中已经真正完成的内容。 -->
 
-## Acceptance commands and results
+## 检查结果
 
 ```text
-uv run pytest -q:
-uv run ruff check services/api services/inference:
-npm run build:
-terraform validate:
-additional live tests:
+uv run pytest -q：
+uv run ruff check services/api services/inference：
+npm run build：
+terraform validate：
+真实云端测试：
 ```
 
-## Requirement evidence
+## 证据
 
-<!-- List verification IDs and redacted evidence links, e.g. AUTH-02, UP-01. -->
+<!-- 添加脱敏截图、测试报告、日志或视频链接。 -->
 
-## Cloud/account safety
+## 云账号和安全
 
-- [ ] No credential, token, `.env`, Terraform state, presigned query string or model weight.
-- [ ] AWS account/region and GCP project/region were checked before deployment.
-- [ ] New resources, expected cost and cleanup owner are documented.
-- [ ] No long-lived GCP service-account key was created.
+- [ ] 没有凭证、token、`.env`、Terraform state、预签名 URL 或模型权重。
+- [ ] 部署前核对了 AWS account/region 和 GCP project/region。
+- [ ] 记录了新增资源、可能费用和清理负责人。
+- [ ] 没有创建长期 GCP Service Account JSON key。
 
-## Known limitations and blockers
+## 已知限制和阻塞
 
-<!-- Give exact behaviour and issue link. Write "None" only after checking. -->
+<!-- 必须写清楚具体行为和 Issue；确认后才能写“无”。 -->
 
-## Incoming-member reproduction
+## 下一位成员复现
 
-- Reviewer:
-- Reproduced scenario:
-- Result:
-- Acceptance record: `Accepted by <name>, <UTC time>, commit <sha>`
+- 接受人：
+- 复现的流程：
+- 结果：
+- 记录：`<姓名> 于 <UTC时间> 接受 commit <sha>`
