@@ -1,0 +1,12 @@
+fastapi>=0.115
+google-cloud-storage>=2.18
+megadetector>=5.0
+numpy>=2.0
+onnx>=1.16
+opencv-python-headless>=4.10
+pillow>=11.0
+python-multipart>=0.0.18
+torch>=2.5
+torchvision>=0.20
+uvicorn[standard]>=0.32
+PyYAML>=6.0

@@ -1,0 +1,4 @@
+# Core API dependencies are defined in pyproject.toml.
+-e .
+
+# Real ML service dependencies are isolated in services/inference/requirements.txt.

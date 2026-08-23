@@ -1,0 +1,11 @@
+output "media_bucket" { value = aws_s3_bucket.media.id }
+output "table_name" { value = aws_dynamodb_table.archive.name }
+output "api_endpoint" { value = aws_apigatewayv2_api.http.api_endpoint }
+output "cognito_user_pool_id" { value = aws_cognito_user_pool.users.id }
+output "cognito_client_id" { value = aws_cognito_user_pool_client.web.id }
+output "api_ecr" { value = aws_ecr_repository.api.repository_url }
+output "worker_ecr" { value = aws_ecr_repository.worker.repository_url }
+output "gcp_model_bucket" { value = google_storage_bucket.models.name }
+output "gcp_artifact_registry" { value = google_artifact_registry_repository.containers.name }
+output "inference_url" { value = var.deploy_compute ? google_cloud_run_v2_service.inference[0].uri : null }
+output "web_url" { value = var.deploy_compute ? google_cloud_run_v2_service.web[0].uri : null }
