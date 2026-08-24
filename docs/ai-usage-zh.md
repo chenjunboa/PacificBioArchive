@@ -23,7 +23,7 @@
 - 已完成验证：后端/推理测试、Ruff、TypeScript/Vite 构建、Terraform 验证、真实模型样例和浏览器流程。
 - 限制：AI 辅助和本地测试不能证明云端正确。第二至第四位成员必须独立实现和验证自己的部分。
 
-## 2026年8月24日——第二位成员云端部署准备
+## 2026年8月24日——第二位成员真实云端部署
 
 - 使用的 AI 工具：OpenAI Codex。
 - 用途：审计本地原型与作业要求的差距、实现云端运行边界、生成测试和部署操作清单。
@@ -31,6 +31,11 @@
   模型 GCS 下载、Lambda 容器入口、Terraform 和云端上传前端。
 - 人工责任：第二位成员必须用本人账号确认每次云资源操作、邮箱验证码、Billing、镜像 digest、
   云端日志和 PR，并在演示前能解释实际部署结果。
-- 当前验证：12 项本地测试、Ruff、React 构建、Terraform 格式和静态验证通过。
-- 尚未验证：Docker daemon 未启动，GCP CLI 尚未安装，真实 AWS/GCP apply、WIF 和云端端到端
-  流程尚未执行，不能在报告中写成已通过。
+- 本人检查和修改：使用个人 AWS/GCP 账号逐次审核 Terraform plan，处理 AWS 临时凭据、ECR
+  登录、Lambda 内存配额、API Gateway CORS 和 DynamoDB 事务序列化问题；本人完成 Cognito
+  邮箱验证、真实图片上传和页面结果确认。
+- 最终测试证据：13 项 Python 测试、Ruff、React 构建、Terraform 验证和 GitHub Actions 三项
+  检查通过；四个镜像已推送并由 registry digest 复核；真实 AWS/GCP apply 完成；匿名 inference
+  返回 403，Worker 通过 WIF 调用私有 Cloud Run `/infer` 返回 200，页面最终显示识别完成。
+- 限制：AI 没有接触或保存账号密码、MFA、邮箱验证码、云 token 或模型权重；第三位成员范围内
+  的完整索引、查询、并发租约、订阅、删除一致性和故障注入测试仍需按独立 Issue 完成。

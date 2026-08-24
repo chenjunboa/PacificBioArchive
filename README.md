@@ -1,17 +1,19 @@
 # Pacific BioArchive 小组作业仓库
 
-这是 FIT5225 Assignment 2 的四人接力式开发仓库。当前 `main` 分支和
-`handoff-1-local` 标签保存的是第一位成员完成并验证过的本地完整原型。
+这是 FIT5225 Assignment 2 的四人接力式开发仓库。`main` 当前保存第一位成员完成并验证过的
+本地原型；第二位成员的已部署云端版本位于 `member-2/cloud-deployment`，合并与正式交接完成后
+再更新 `handoff-2-cloud` 标签。
 
 ## 当前状态
 
-已经完成并验证：React 本地页面和登录、图片上传与 SHA-256 去重、缩略图、四类查询、
-批量标签、删除、订阅、所有者权限、视频每秒一帧函数、真实模型样例、Terraform 框架、
-9 项自动测试、前端构建、Terraform 验证和 GitHub Actions。
+已经完成并验证：React 页面、Cognito 注册登录、DynamoDB/S3 云端边界、SQS Lambda Worker、
+AWS API Gateway、AWS→GCP WIF、私有 Cloud Run inference、真实模型、四个容器镜像、Terraform
+基础与 compute 资源、13 项自动测试、前端构建和 GitHub Actions 三项检查。
 
-第二位成员已创建 AWS/GCP foundation，并完成 DynamoDB/S3 生产边界、SQS worker、
-Cognito、WIF、私有模型 bundle 和容器部署配置。尚未完成：compute 镜像推送、真实云端
-端到端测试，以及第三、第四位成员负责的完整业务适配和最终验收。
+第二位成员已在真实 AWS/GCP 环境完成图片上传与推理端到端验证。镜像 digest、资源清单、费用
+风险、清理责任和脱敏验收结果见
+[member-2-delivery.md](docs/member-2-delivery.md)。第三、第四位成员负责的完整业务适配、并发与
+故障注入测试和最终验收尚未完成。
 
 ## 四个人只看各自的文档
 

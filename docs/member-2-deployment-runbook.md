@@ -143,6 +143,17 @@ docker push "${gcpRegistry}/web:$commitSha"
 
 把四个 `docker push` 输出中的 digest 保存到 PR，不要只记录 tag。
 
+本次部署已在 2026-08-24 从两个 registry 重新查询并确认：
+
+| 镜像 | 部署 tag | Registry digest |
+|---|---|---|
+| API | `9d8d7b802e4a36dbac1a9c4a979e583d2d906b00` | `sha256:66aa3d0e4f0586f144d28623d78728878028b7f28e9581b6e767c8623fde5cc7` |
+| Worker | `53720237c47d410d8b58b39769f8a6b5c8e20de8` | `sha256:f68c237c0521214fb9f15579cedc62040f88e818f8be5335667d209514083a68` |
+| Inference | `53720237c47d410d8b58b39769f8a6b5c8e20de8` | `sha256:4465568a655ef2a48020a0c45f976fea01b5c3161b207cc8db05f7d11e82f81d` |
+| Web | `53720237c47d410d8b58b39769f8a6b5c8e20de8` | `sha256:63f8d1e95fd9d9d68d554e203553b01c9fb307842429fa276764ab43831f4a28` |
+
+完整交付证据见 [member-2-delivery.md](member-2-delivery.md)。
+
 ## 6. 部署 compute
 
 在未提交的 `infra/terraform.tfvars` 追加：
