@@ -6,6 +6,8 @@ humanfriendly==10.0
 jsonpickle==4.1.1
 matplotlib==3.10.3
 numpy==1.26.4
+onnx==1.22.0
+onnx2torch==1.5.15
 opencv-python-headless==4.10.0.84
 pandas==2.3.0
 pillow==11.2.1
