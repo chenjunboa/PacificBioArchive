@@ -242,7 +242,7 @@ resource "aws_lambda_function" "worker" {
   package_type  = "Image"
   image_uri     = var.worker_image_uri
   timeout       = 900
-  memory_size   = 3072
+  memory_size   = 3008
   ephemeral_storage {
     size = 4096
   }
@@ -303,6 +303,13 @@ resource "aws_apigatewayv2_route" "default" {
   target             = "integrations/${aws_apigatewayv2_integration.api[0].id}"
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+resource "aws_apigatewayv2_route" "cors_preflight" {
+  count              = var.deploy_compute ? 1 : 0
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = "OPTIONS /{proxy+}"
+  target             = "integrations/${aws_apigatewayv2_integration.api[0].id}"
+  authorization_type = "NONE"
 }
 resource "aws_apigatewayv2_route" "health" {
   count              = var.deploy_compute ? 1 : 0

@@ -38,7 +38,10 @@ class DynamoDBRepository:
         self.table_name = table_name
         self.resource = boto3.resource("dynamodb", region_name=region_name)
         self.table = self.resource.Table(table_name)
-        self.client = self.resource.meta.client
+        # Transactions use the low-level client because their Item fields must be
+        # explicit DynamoDB AttributeValue maps.  The resource client installs a
+        # document serializer and would serialize these maps a second time.
+        self.client = boto3.client("dynamodb", region_name=region_name)
 
     @staticmethod
     def _media_key(media_id: str) -> dict[str, str]:
