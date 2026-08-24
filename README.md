@@ -9,8 +9,9 @@
 批量标签、删除、订阅、所有者权限、视频每秒一帧函数、真实模型样例、Terraform 框架、
 9 项自动测试、前端构建、Terraform 验证和 GitHub Actions。
 
-尚未完成：真实 AWS/GCP 部署、DynamoDB/S3 生产适配器、SQS 云端 worker、Cognito
-真实登录、WIF 和云端端到端测试。这些工作已明确分配给第二至第四位成员。
+第二位成员已创建 AWS/GCP foundation，并完成 DynamoDB/S3 生产边界、SQS worker、
+Cognito、WIF、私有模型 bundle 和容器部署配置。尚未完成：compute 镜像推送、真实云端
+端到端测试，以及第三、第四位成员负责的完整业务适配和最终验收。
 
 ## 四个人只看各自的文档
 
@@ -20,6 +21,10 @@
 | 第二位 | AWS/GCP 部署、Cognito、API Gateway、WIF | [member-2-cloud.md](docs/member-2-cloud.md) |
 | 第三位 | DynamoDB、S3/SQS worker、ML、查询、标签和删除 | [member-3-backend.md](docs/member-3-backend.md) |
 | 第四位 | React 完善、云端集成、E2E、演示和最终验收 | [member-4-release.md](docs/member-4-release.md) |
+
+第二位成员进行真实部署时同时使用
+[member-2-deployment-runbook.md](docs/member-2-deployment-runbook.md)，其中列出账号本人必须
+完成的步骤、镜像命令、验证证据和第三阶段交接边界。
 
 `docs/ai-usage-zh.md` 是作业要求的生成式 AI 使用记录，每个人工作完成后补一条，不能删除。
 

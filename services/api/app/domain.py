@@ -63,6 +63,8 @@ class UploadInitResponse(BaseModel):
     mediaId: str
     uploadUrl: str
     objectKey: str
+    uploadMethod: str = "PUT"
+    uploadFields: dict[str, str] = Field(default_factory=dict)
 
 
 class MediaView(BaseModel):

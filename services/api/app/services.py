@@ -35,6 +35,9 @@ class LocalStorage:
         folder.mkdir(parents=True, exist_ok=True)
         return folder / self.safe_filename(filename)
 
+    def media_key(self, media_id: str, filename: str) -> str:
+        return f"originals/{media_id}/{self.safe_filename(filename)}"
+
     def thumbnail_path(self, media_id: str) -> Path:
         return self.thumbnails / f"{media_id}.jpg"
 

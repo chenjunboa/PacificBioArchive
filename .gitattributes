@@ -1,0 +1,10 @@
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.tf text eol=lf
+*.tsx text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+labels.txt text eol=lf
+*.pt binary
+*.onnx binary

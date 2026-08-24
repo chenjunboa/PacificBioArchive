@@ -1,6 +1,9 @@
 locals {
   prefix          = "${var.project_name}-${var.environment}"
   lambda_role_arn = var.lab_role_arn != "" ? var.lab_role_arn : aws_iam_role.lambda[0].arn
+  lambda_role_name = var.lab_role_arn != "" ? element(
+    reverse(split("/", var.lab_role_arn)), 0
+  ) : var.aws_role_name
 }
 
 resource "aws_s3_bucket" "media" {
@@ -35,6 +38,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "media" {
     }
   }
 }
+resource "aws_s3_bucket_cors_configuration" "media" {
+  bucket = aws_s3_bucket.media.id
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD", "POST"]
+    allowed_origins = concat(
+      ["http://localhost:5173", "http://127.0.0.1:5173"],
+      var.deploy_compute ? [google_cloud_run_v2_service.web[0].uri] : []
+    )
+    expose_headers  = ["ETag"]
+    max_age_seconds = 3600
+  }
+}
 
 resource "aws_sqs_queue" "dlq" {
   name                      = "${local.prefix}-media-dlq"
@@ -42,7 +58,7 @@ resource "aws_sqs_queue" "dlq" {
 }
 resource "aws_sqs_queue" "jobs" {
   name                       = "${local.prefix}-media-jobs"
-  visibility_timeout_seconds = 900
+  visibility_timeout_seconds = 5400
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.dlq.arn
     maxReceiveCount     = 3
@@ -145,11 +161,23 @@ resource "aws_cognito_user_pool" "users" {
   }
 }
 resource "aws_cognito_user_pool_client" "web" {
-  name                          = "${local.prefix}-web"
-  user_pool_id                  = aws_cognito_user_pool.users.id
-  generate_secret               = false
-  explicit_auth_flows           = ["ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
-  prevent_user_existence_errors = "ENABLED"
+  name                                 = "${local.prefix}-web"
+  user_pool_id                         = aws_cognito_user_pool.users.id
+  generate_secret                      = false
+  explicit_auth_flows                  = ["ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+  prevent_user_existence_errors        = "ENABLED"
+  supported_identity_providers         = ["COGNITO"]
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_scopes                 = ["email", "openid", "profile"]
+  callback_urls = concat(
+    ["http://localhost:5173/"],
+    var.deploy_compute ? ["${google_cloud_run_v2_service.web[0].uri}/"] : []
+  )
+  logout_urls = concat(
+    ["http://localhost:5173/"],
+    var.deploy_compute ? ["${google_cloud_run_v2_service.web[0].uri}/"] : []
+  )
 }
 
 resource "aws_ecr_repository" "api" {
@@ -177,7 +205,7 @@ resource "aws_iam_role_policy" "lambda" {
     Statement = [
       { Effect = "Allow", Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"], Resource = "arn:aws:logs:*:*:*" },
       { Effect = "Allow", Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], Resource = "${aws_s3_bucket.media.arn}/*" },
-      { Effect = "Allow", Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan", "dynamodb:BatchGetItem", "dynamodb:BatchWriteItem"], Resource = [aws_dynamodb_table.archive.arn, "${aws_dynamodb_table.archive.arn}/index/*"] },
+      { Effect = "Allow", Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan", "dynamodb:BatchGetItem", "dynamodb:BatchWriteItem", "dynamodb:TransactWriteItems"], Resource = [aws_dynamodb_table.archive.arn, "${aws_dynamodb_table.archive.arn}/index/*"] },
       { Effect = "Allow", Action = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"], Resource = aws_sqs_queue.jobs.arn },
       { Effect = "Allow", Action = "sns:Publish", Resource = aws_sns_topic.notifications.arn }
     ]
@@ -199,6 +227,11 @@ resource "aws_lambda_function" "api" {
       MEDIA_BUCKET      = aws_s3_bucket.media.id
       COGNITO_CLIENT_ID = aws_cognito_user_pool_client.web.id
       COGNITO_ISSUER    = "https://cognito-idp.${var.aws_region}.amazonaws.com/${aws_cognito_user_pool.users.id}"
+      CORS_ORIGINS = join(",", concat(
+        ["http://localhost:5173", "http://127.0.0.1:5173"],
+        var.deploy_compute ? [google_cloud_run_v2_service.web[0].uri] : []
+      ))
+      NOTIFICATION_TOPIC_ARN = aws_sns_topic.notifications.arn
     }
   }
 }
@@ -215,27 +248,33 @@ resource "aws_lambda_function" "worker" {
   }
   environment {
     variables = {
-      TABLE_NAME             = aws_dynamodb_table.archive.name
-      MEDIA_BUCKET           = aws_s3_bucket.media.id
-      NOTIFICATION_TOPIC_ARN = aws_sns_topic.notifications.arn
-      GCP_PROJECT_ID         = var.gcp_project_id
-      GCP_REGION             = var.gcp_region
-      INFERENCE_URL          = var.deploy_compute ? google_cloud_run_v2_service.inference[0].uri : ""
+      TABLE_NAME              = aws_dynamodb_table.archive.name
+      MEDIA_BUCKET            = aws_s3_bucket.media.id
+      NOTIFICATION_TOPIC_ARN  = aws_sns_topic.notifications.arn
+      GCP_PROJECT_ID          = var.gcp_project_id
+      GCP_REGION              = var.gcp_region
+      INFERENCE_URL           = var.deploy_compute ? google_cloud_run_v2_service.inference[0].uri : ""
+      GCP_WIF_AUDIENCE        = "//iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.aws.workload_identity_pool_id}/providers/${google_iam_workload_identity_pool_provider.aws.workload_identity_pool_provider_id}"
+      GCP_WIF_SERVICE_ACCOUNT = google_service_account.aws_caller.email
     }
   }
 }
 resource "aws_lambda_event_source_mapping" "worker" {
-  count            = var.deploy_compute ? 1 : 0
-  event_source_arn = aws_sqs_queue.jobs.arn
-  function_name    = aws_lambda_function.worker[0].arn
-  batch_size       = 1
+  count                   = var.deploy_compute ? 1 : 0
+  event_source_arn        = aws_sqs_queue.jobs.arn
+  function_name           = aws_lambda_function.worker[0].arn
+  batch_size              = 1
+  function_response_types = ["ReportBatchItemFailures"]
 }
 
 resource "aws_apigatewayv2_api" "http" {
   name          = "${local.prefix}-api"
   protocol_type = "HTTP"
   cors_configuration {
-    allow_origins = ["*"]
+    allow_origins = concat(
+      ["http://localhost:5173", "http://127.0.0.1:5173"],
+      var.deploy_compute ? [google_cloud_run_v2_service.web[0].uri] : []
+    )
     allow_headers = ["authorization", "content-type"]
     allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   }
@@ -264,6 +303,20 @@ resource "aws_apigatewayv2_route" "default" {
   target             = "integrations/${aws_apigatewayv2_integration.api[0].id}"
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+resource "aws_apigatewayv2_route" "health" {
+  count              = var.deploy_compute ? 1 : 0
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = "GET /health"
+  target             = "integrations/${aws_apigatewayv2_integration.api[0].id}"
+  authorization_type = "NONE"
+}
+resource "aws_apigatewayv2_route" "dev_token_disabled" {
+  count              = var.deploy_compute ? 1 : 0
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = "POST /api/v1/auth/dev-token"
+  target             = "integrations/${aws_apigatewayv2_integration.api[0].id}"
+  authorization_type = "NONE"
 }
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http.id

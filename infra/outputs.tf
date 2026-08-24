@@ -7,5 +7,12 @@ output "api_ecr" { value = aws_ecr_repository.api.repository_url }
 output "worker_ecr" { value = aws_ecr_repository.worker.repository_url }
 output "gcp_model_bucket" { value = google_storage_bucket.models.name }
 output "gcp_artifact_registry" { value = google_artifact_registry_repository.containers.name }
+output "gcp_artifact_registry_url" {
+  value = "${var.gcp_region}-docker.pkg.dev/${var.gcp_project_id}/${google_artifact_registry_repository.containers.repository_id}"
+}
+output "gcp_wif_audience" {
+  value = "//iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.aws.workload_identity_pool_id}/providers/${google_iam_workload_identity_pool_provider.aws.workload_identity_pool_provider_id}"
+}
+output "gcp_wif_service_account" { value = google_service_account.aws_caller.email }
 output "inference_url" { value = var.deploy_compute ? google_cloud_run_v2_service.inference[0].uri : null }
 output "web_url" { value = var.deploy_compute ? google_cloud_run_v2_service.web[0].uri : null }

@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --extra dev
-      - run: uv run ruff check services/api
+      - run: uv run ruff check services/api services/inference services/worker
       - run: uv run pytest -q
 
   web:
@@ -35,5 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f services/api/Dockerfile -t pba-api:test .
+      - run: docker build --provenance=false -f services/api/Dockerfile -t pba-api:test .
+      - run: docker build --provenance=false -f services/worker/Dockerfile -t pba-worker:test .
+      - run: docker build -f services/inference/Dockerfile -t pba-inference:test .
       - run: docker build -f web/Dockerfile -t pba-web:test .

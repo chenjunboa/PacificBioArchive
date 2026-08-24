@@ -5,9 +5,11 @@ import json
 import math
 import os
 import re
+import shutil
 import tempfile
 from collections import Counter
 from pathlib import Path
+from threading import Lock
 
 import cv2
 import numpy as np
@@ -52,6 +54,7 @@ class Runtime:
         self.mode = os.getenv("MODEL_MODE", "stub")
         self.version = os.getenv("MODEL_VERSION", "local-stub-v1")
         self._real = None
+        self._load_lock = Lock()
 
     def infer(self, path: Path, filename: str, content_type: str) -> InferenceResponse:
         if self.mode != "real":
@@ -65,8 +68,10 @@ class Runtime:
                 tags={tag: 1}, modelVersion=self.version, sampledFrames=sampled
             )
         if self._real is None:
-            self._real = RealModelRuntime.from_environment()
-            self.version = self._real.version
+            with self._load_lock:
+                if self._real is None:
+                    self._real = RealModelRuntime.from_environment()
+                    self.version = self._real.version
         return self._real.infer(path, content_type)
 
 
@@ -88,7 +93,9 @@ class RealModelRuntime:
 
     @classmethod
     def from_environment(cls) -> "RealModelRuntime":
-        manifest_path = Path(os.getenv("MODEL_MANIFEST", "/models/manifest.json"))
+        manifest_path = materialize_manifest(
+            os.getenv("MODEL_MANIFEST", "/models/manifest.json")
+        )
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         base = manifest_path.parent
         paths = {
@@ -151,6 +158,60 @@ class RealModelRuntime:
             with self.torch.no_grad():
                 indexes = self.model(batch).argmax(dim=1).cpu().tolist()
             return Counter(self.labels[index] for index in indexes)
+
+
+def materialize_manifest(reference: str) -> Path:
+    """Return a local, checksum-verifiable model manifest.
+
+    A local path is preserved for development. In cloud mode a gs:// manifest and
+    every file referenced by it are downloaded into a generation-specific cache
+    directory, so a container never mixes files from two model generations.
+    """
+    if not reference.startswith("gs://"):
+        return Path(reference)
+    from google.cloud import storage
+
+    bucket_name, _, blob_name = reference[5:].partition("/")
+    if not bucket_name or not blob_name:
+        raise RuntimeError("MODEL_MANIFEST must be a gs://bucket/object URI")
+    client = storage.Client()
+    blob = client.bucket(bucket_name).blob(blob_name)
+    blob.reload()
+    generation = str(blob.generation)
+    cache_root = Path(os.getenv("MODEL_CACHE_DIR", "/tmp/models"))
+    target_dir = cache_root / generation
+    target_manifest = target_dir / Path(blob_name).name
+    if target_manifest.exists():
+        return target_manifest
+    cache_root.mkdir(parents=True, exist_ok=True)
+    temporary_dir = Path(tempfile.mkdtemp(prefix="model-", dir=cache_root))
+    try:
+        temporary_manifest = temporary_dir / Path(blob_name).name
+        blob.download_to_filename(temporary_manifest)
+        manifest = json.loads(temporary_manifest.read_text(encoding="utf-8"))
+        base_prefix = str(Path(blob_name).parent).replace("\\", "/")
+        if base_prefix == ".":
+            base_prefix = ""
+        for name in ("detector", "classifier", "labels"):
+            relative_path = Path(manifest[name]["path"])
+            if relative_path.is_absolute() or ".." in relative_path.parts:
+                raise RuntimeError(f"Unsafe {name} path in model manifest")
+            object_name = "/".join(part for part in (base_prefix, relative_path.as_posix()) if part)
+            destination = temporary_dir / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            client.bucket(bucket_name).blob(object_name).download_to_filename(destination)
+            digest = hashlib.sha256(destination.read_bytes()).hexdigest()
+            if digest != manifest[name]["sha256"]:
+                raise RuntimeError(f"{name} checksum does not match manifest")
+        try:
+            temporary_dir.replace(target_dir)
+        except FileExistsError:
+            shutil.rmtree(temporary_dir)
+        return target_manifest
+    except Exception:
+        if temporary_dir.exists():
+            shutil.rmtree(temporary_dir)
+        raise
 
 
 app = FastAPI(title="Pacific BioArchive Inference", version="0.1.0")

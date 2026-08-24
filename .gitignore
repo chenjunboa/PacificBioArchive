@@ -3,6 +3,7 @@
 .ruff_cache/
 __pycache__/
 *.py[cod]
+*.egg-info/
 .env
 .local-data/
 node_modules/
@@ -23,4 +24,5 @@ infra/terraform.tfvars
 *.onnx
 mg_detections.json
 cropped_images/
+.model-bundles/
 .idea/

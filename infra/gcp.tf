@@ -7,6 +7,9 @@ locals {
     "sts.googleapis.com"
   ])
 }
+data "google_project" "current" {
+  project_id = var.gcp_project_id
+}
 resource "google_project_service" "services" {
   for_each           = local.gcp_services
   service            = each.value
@@ -24,7 +27,7 @@ resource "google_storage_bucket" "models" {
 }
 resource "google_artifact_registry_repository" "containers" {
   location      = var.gcp_region
-  repository_id = replace(local.prefix, "-", "_")
+  repository_id = local.prefix
   format        = "DOCKER"
   depends_on    = [google_project_service.services]
 }
@@ -36,9 +39,14 @@ resource "google_service_account" "aws_caller" {
   account_id   = "pba-aws-caller"
   display_name = "AWS processing Lambda caller"
 }
+resource "google_storage_bucket_iam_member" "inference_models" {
+  bucket = google_storage_bucket.models.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${google_service_account.inference.email}"
+}
 resource "google_iam_workload_identity_pool" "aws" {
   workload_identity_pool_id = "pba-aws-pool"
-  display_name              = "Pacific BioArchive AWS identities"
+  display_name              = "PBA AWS identities"
 }
 resource "google_iam_workload_identity_pool_provider" "aws" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.aws.workload_identity_pool_id
@@ -55,7 +63,7 @@ resource "google_iam_workload_identity_pool_provider" "aws" {
 resource "google_service_account_iam_member" "federated" {
   service_account_id = google_service_account.aws_caller.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.aws.name}/attribute.aws_role/${var.aws_role_name}"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.aws.name}/attribute.aws_role/${local.lambda_role_name}"
 }
 
 resource "google_cloud_run_v2_service" "inference" {
@@ -82,7 +90,11 @@ resource "google_cloud_run_v2_service" "inference" {
       }
       env {
         name  = "MODEL_MANIFEST"
-        value = "/models/manifest.json"
+        value = "gs://${google_storage_bucket.models.name}/model-manifest.json"
+      }
+      env {
+        name  = "MODEL_CACHE_DIR"
+        value = "/tmp/models"
       }
     }
     timeout = "900s"
