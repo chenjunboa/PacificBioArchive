@@ -68,11 +68,50 @@ class InferenceClient:
     def __init__(self, settings: Settings):
         self.settings = settings
 
+    def _headers(self) -> dict[str, str]:
+        if not self.settings.gcp_wif_audience or not self.settings.gcp_wif_service_account:
+            return {}
+        from google.auth import aws, impersonated_credentials
+        from google.auth.transport.requests import Request
+
+        external = aws.Credentials(
+            audience=self.settings.gcp_wif_audience,
+            subject_token_type="urn:ietf:params:aws:token-type:aws4_request",
+            credential_source={
+                "environment_id": "aws1",
+                "region_url": (
+                    "http://169.254.169.254/latest/meta-data/placement/availability-zone"
+                ),
+                "url": "http://169.254.169.254/latest/meta-data/iam/security-credentials",
+                "regional_cred_verification_url": (
+                    "https://sts.{region}.amazonaws.com"
+                    "?Action=GetCallerIdentity&Version=2011-06-15"
+                ),
+            },
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+        target = impersonated_credentials.Credentials(
+            source_credentials=external,
+            target_principal=self.settings.gcp_wif_service_account,
+            target_scopes=["https://www.googleapis.com/auth/cloud-platform"],
+            lifetime=900,
+        )
+        identity = impersonated_credentials.IDTokenCredentials(
+            target,
+            target_audience=self.settings.inference_url.rstrip("/"),
+            include_email=True,
+        )
+        identity.refresh(Request())
+        if not identity.token:
+            raise RuntimeError("GCP WIF did not return an ID token")
+        return {"Authorization": f"Bearer {identity.token}"}
+
     def detect(self, path: Path, filename: str, content_type: str) -> tuple[dict[str, int], str]:
         if self.settings.inference_mode == "http":
             with path.open("rb") as file:
                 response = httpx.post(
                     f"{self.settings.inference_url.rstrip('/')}/infer",
+                    headers=self._headers(),
                     files={"file": (filename, file, content_type)},
                     timeout=600,
                 )

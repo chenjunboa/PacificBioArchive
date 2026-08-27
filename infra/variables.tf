@@ -39,8 +39,8 @@ variable "deploy_compute" {
 }
 variable "deploy_zip_worker" {
   type        = bool
-  default     = true
-  description = "Deploy the Docker-free Member 3 SQS worker as a Lambda ZIP."
+  default     = false
+  description = "Optional fallback ZIP worker. Keep false for final release."
 }
 variable "api_image_uri" {
   type    = string

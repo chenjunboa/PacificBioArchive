@@ -231,7 +231,11 @@ resource "aws_lambda_function" "api" {
         ["http://localhost:5173", "http://127.0.0.1:5173"],
         var.deploy_compute ? [google_cloud_run_v2_service.web[0].uri] : []
       ))
-      NOTIFICATION_TOPIC_ARN = aws_sns_topic.notifications.arn
+      NOTIFICATION_TOPIC_ARN  = aws_sns_topic.notifications.arn
+      INFERENCE_MODE          = "http"
+      INFERENCE_URL           = var.deploy_compute ? google_cloud_run_v2_service.inference[0].uri : ""
+      GCP_WIF_AUDIENCE        = "//iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.aws.workload_identity_pool_id}/providers/${google_iam_workload_identity_pool_provider.aws.workload_identity_pool_provider_id}"
+      GCP_WIF_SERVICE_ACCOUNT = google_service_account.aws_caller.email
     }
   }
 }

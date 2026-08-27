@@ -6,10 +6,11 @@ import os
 import tempfile
 from functools import lru_cache
 from pathlib import Path
-from urllib.parse import unquote_plus
+from urllib.parse import quote, unquote_plus, urlparse
 
 import boto3
 import httpx
+from boto3.dynamodb.types import TypeSerializer
 from google.auth import aws, impersonated_credentials
 from google.auth.transport.requests import Request
 from PIL import Image
@@ -29,6 +30,100 @@ def dynamodb_table():
 @lru_cache
 def sns_client():
     return boto3.client("sns")
+
+
+@lru_cache
+def dynamodb_client():
+    return boto3.client("dynamodb")
+
+
+@lru_cache
+def serializer():
+    return TypeSerializer()
+
+
+def _wire(values: dict) -> dict:
+    return {key: serializer().serialize(value) for key, value in values.items()}
+
+
+def _padded_count(count: int) -> str:
+    return f"{int(count):010d}"
+
+
+def _tag_key(tag: str, count: int, media_id: str) -> dict[str, str]:
+    return {"PK": f"TAG#{tag}", "SK": f"COUNT#{_padded_count(count)}#MEDIA#{media_id}"}
+
+
+def _stable_thumbnail_url(value: str) -> str:
+    parsed = urlparse(value)
+    if parsed.scheme == "s3":
+        return f"https://{parsed.netloc}.s3.amazonaws.com/{quote(parsed.path.lstrip('/'))}"
+    if parsed.scheme in {"http", "https"}:
+        return parsed._replace(query="", fragment="").geturl()
+    return value
+
+
+def _thumbnail_hash(value: str) -> str:
+    return hashlib.sha256(_stable_thumbnail_url(value).encode("utf-8")).hexdigest()
+
+
+def _replace_indexes(
+    media_id: str,
+    old_tags: dict[str, int],
+    new_tags: dict[str, int],
+    thumbnail_uri: str | None,
+    original_uri: str,
+) -> None:
+    actions: list[dict] = []
+    for tag, count in old_tags.items():
+        if new_tags.get(tag) != count:
+            actions.append(
+                {
+                    "Delete": {
+                        "TableName": os.environ["TABLE_NAME"],
+                        "Key": _wire(_tag_key(tag, int(count), media_id)),
+                    }
+                }
+            )
+    for tag, count in new_tags.items():
+        if int(count) > 0 and old_tags.get(tag) != count:
+            actions.append(
+                {
+                    "Put": {
+                        "TableName": os.environ["TABLE_NAME"],
+                        "Item": _wire(
+                            {
+                                **_tag_key(tag, int(count), media_id),
+                                "mediaId": media_id,
+                                "tag": tag,
+                                "count": int(count),
+                            }
+                        ),
+                    }
+                }
+            )
+    if thumbnail_uri:
+        actions.append(
+            {
+                "Put": {
+                    "TableName": os.environ["TABLE_NAME"],
+                    "Item": _wire(
+                        {
+                            "PK": f"THUMB#{_thumbnail_hash(thumbnail_uri)}",
+                            "SK": "MAP",
+                            "mediaId": media_id,
+                            "thumbnailUri": thumbnail_uri,
+                            "originalUri": original_uri,
+                            "stableThumbnailUrl": _stable_thumbnail_url(thumbnail_uri),
+                        }
+                    ),
+                }
+            }
+        )
+    for index in range(0, len(actions), 25):
+        chunk = actions[index : index + 25]
+        if chunk:
+            dynamodb_client().transact_write_items(TransactItems=chunk)
 
 
 def _wif_id_token(target_audience: str) -> str:
@@ -163,9 +258,10 @@ def _process_s3_record(record: dict) -> None:
         "objectUri = :object_uri"
     )
     names = {"#status": "status"}
+    new_tags = {tag: int(count) for tag, count in result["tags"].items() if int(count) > 0}
     values = {
         ":ready": "READY",
-        ":tags": {tag: int(count) for tag, count in result["tags"].items() if int(count) > 0},
+        ":tags": new_tags,
         ":version": result["modelVersion"],
         ":object_uri": f"s3://{bucket}/{key}",
     }
@@ -180,12 +276,19 @@ def _process_s3_record(record: dict) -> None:
         ExpressionAttributeNames=names,
         ExpressionAttributeValues=values,
     )
+    _replace_indexes(
+        media_id,
+        {tag: int(count) for tag, count in item.get("tags", {}).items()},
+        new_tags,
+        thumbnail_uri,
+        values[":object_uri"],
+    )
     topic_arn = os.getenv("NOTIFICATION_TOPIC_ARN")
-    if topic_arn and values[":tags"]:
+    if topic_arn and new_tags:
         sns_client().publish(
             TopicArn=topic_arn,
             Subject="Pacific BioArchive species update",
-            Message=f"Media {media_id} contains: {', '.join(sorted(values[':tags']))}",
+            Message=f"Media {media_id} contains: {', '.join(sorted(new_tags))}",
         )
 
 
