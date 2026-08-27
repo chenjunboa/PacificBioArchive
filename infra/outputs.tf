@@ -5,6 +5,7 @@ output "cognito_user_pool_id" { value = aws_cognito_user_pool.users.id }
 output "cognito_client_id" { value = aws_cognito_user_pool_client.web.id }
 output "api_ecr" { value = aws_ecr_repository.api.repository_url }
 output "worker_ecr" { value = aws_ecr_repository.worker.repository_url }
+output "member3_worker_name" { value = try(aws_lambda_function.worker_zip[0].function_name, null) }
 output "gcp_model_bucket" { value = google_storage_bucket.models.name }
 output "gcp_artifact_registry" { value = google_artifact_registry_repository.containers.name }
 output "gcp_artifact_registry_url" {
