@@ -10,7 +10,7 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react'
-import { fetchAuthSession, signIn, signOut } from 'aws-amplify/auth'
+import { confirmSignUp, fetchAuthSession, signIn, signOut, signUp } from 'aws-amplify/auth'
 import { API_BASE, ApiError, Media, api, uploadFile } from './api'
 
 type Tab = 'upload' | 'search' | 'manage' | 'notifications'
@@ -18,19 +18,48 @@ type Tab = 'upload' | 'search' | 'manage' | 'notifications'
 function Login({ onLogin }: { onLogin: (token: string, email: string) => void }) {
   const [email, setEmail] = useState('researcher@example.com')
   const [password, setPassword] = useState('')
+  const [givenName, setGivenName] = useState('')
+  const [familyName, setFamilyName] = useState('')
+  const [confirmationCode, setConfirmationCode] = useState('')
+  const [mode, setMode] = useState<'signIn' | 'signUp' | 'confirm'>('signIn')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const cloudMode = Boolean(import.meta.env.VITE_COGNITO_USER_POOL_ID)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     setBusy(true)
     setError('')
+    setNotice('')
     try {
       if (cloudMode) {
-        await signIn({ username: email, password })
-        const session = await fetchAuthSession()
-        onLogin(session.tokens?.idToken?.toString() ?? '', email)
+        if (mode === 'signUp') {
+          const result = await signUp({
+            username: email,
+            password,
+            options: {
+              userAttributes: { email, given_name: givenName, family_name: familyName },
+            },
+          })
+          if (result.nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
+            setMode('confirm')
+            setNotice('Check your email and enter the confirmation code.')
+          } else {
+            setMode('signIn')
+            setNotice('Account created. You can now sign in.')
+          }
+        } else if (mode === 'confirm') {
+          await confirmSignUp({ username: email, confirmationCode })
+          setMode('signIn')
+          setNotice('Email confirmed. You can now sign in.')
+        } else {
+          await signIn({ username: email, password })
+          const session = await fetchAuthSession()
+          const idToken = session.tokens?.idToken?.toString()
+          if (!idToken) throw new Error('Cognito did not return an ID token')
+          onLogin(idToken, email)
+        }
       } else {
         const response = await fetch(`${API_BASE}/auth/dev-token`, {
           method: 'POST',
@@ -61,12 +90,23 @@ function Login({ onLogin }: { onLogin: (token: string, email: string) => void })
       </section>
       <form className="login-card" onSubmit={submit}>
         <p className="eyebrow">Researcher access</p>
-        <h2>Welcome back</h2>
+        <h2>{mode === 'signUp' ? 'Create account' : mode === 'confirm' ? 'Verify email' : 'Welcome back'}</h2>
         <label>Email<input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></label>
-        {cloudMode && <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>}
+        {cloudMode && mode === 'signUp' && <>
+          <label>First name<input value={givenName} onChange={e => setGivenName(e.target.value)} required /></label>
+          <label>Last name<input value={familyName} onChange={e => setFamilyName(e.target.value)} required /></label>
+        </>}
+        {cloudMode && mode !== 'confirm' && <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></label>}
+        {cloudMode && mode === 'confirm' && <label>Confirmation code<input inputMode="numeric" value={confirmationCode} onChange={e => setConfirmationCode(e.target.value)} required /></label>}
         {!cloudMode && <p className="local-note">Local prototype mode — no real account is created.</p>}
+        {notice && <p className="status info">{notice}</p>}
         {error && <p className="error">{error}</p>}
-        <button className="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        <button className="primary" disabled={busy}>
+          {busy ? 'Please wait…' : mode === 'signUp' ? 'Create account' : mode === 'confirm' ? 'Confirm email' : 'Sign in'}
+        </button>
+        {cloudMode && mode !== 'confirm' && <button type="button" onClick={() => setMode(mode === 'signIn' ? 'signUp' : 'signIn')}>
+          {mode === 'signIn' ? 'Create a new account' : 'Back to sign in'}
+        </button>}
       </form>
     </main>
   )
@@ -120,7 +160,8 @@ function ResultCard({ media, token }: { media: Media; token: string }) {
     const url = media.thumbnailUrl
     if (!url) return
     let current = ''
-    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    const headers = url.startsWith(API_BASE) ? { Authorization: `Bearer ${token}` } : undefined
+    fetch(url, { headers })
       .then(response => response.blob())
       .then(blob => { current = URL.createObjectURL(blob); setPreview(current) })
     return () => { if (current) URL.revokeObjectURL(current) }

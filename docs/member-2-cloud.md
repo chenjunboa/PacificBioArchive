@@ -94,8 +94,9 @@ terraform plan -out=foundation.tfplan
 
 在 PR 中记录四个镜像的 digest，不能记录登录 token。
 
-将 `labels.txt`、模型和 `manifest.json` 上传到私有 GCS 模型桶。上传前后都计算 SHA-256。
-manifest 必须记录 detector、classifier、labels 的 GCS URI、版本和 SHA-256。
+将 `labels.txt`、模型和 `model-manifest.json` 上传到私有 GCS 模型桶。上传前后都计算
+SHA-256。manifest 必须记录 detector、classifier、labels 相对该 manifest 的对象路径、版本和
+SHA-256。
 
 当前推理容器引用本地 manifest 路径，你需要增加启动时从 GCS 下载或挂载 manifest 和模型的
 逻辑。不能让云端服务依赖你电脑上的 `D:` 路径。

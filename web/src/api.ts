@@ -49,7 +49,12 @@ export async function sha256(file: File): Promise<string> {
 }
 
 export async function uploadFile(file: File, token: string): Promise<Media> {
-  const reservation = await api<{ mediaId: string; uploadUrl: string }>(
+  const reservation = await api<{
+    mediaId: string
+    uploadUrl: string
+    uploadMethod: 'PUT' | 'POST'
+    uploadFields: Record<string, string>
+  }>(
     '/uploads/init',
     token,
     {
@@ -62,16 +67,30 @@ export async function uploadFile(file: File, token: string): Promise<Media> {
       }),
     },
   )
-  const sent = await fetch(`${API_BASE.replace('/api/v1', '')}${reservation.uploadUrl}`, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}` },
-    body: file,
-  })
+  const directUpload = /^https?:\/\//.test(reservation.uploadUrl)
+  let sent: Response
+  if (reservation.uploadMethod === 'POST') {
+    const form = new FormData()
+    Object.entries(reservation.uploadFields).forEach(([key, value]) => form.append(key, value))
+    form.append('file', file)
+    sent = await fetch(reservation.uploadUrl, { method: 'POST', body: form })
+  } else {
+    const target = directUpload
+      ? reservation.uploadUrl
+      : `${API_BASE.replace('/api/v1', '')}${reservation.uploadUrl}`
+    sent = await fetch(target, {
+      method: 'PUT',
+      headers: directUpload
+        ? { 'Content-Type': file.type }
+        : { Authorization: `Bearer ${token}` },
+      body: file,
+    })
+  }
   if (!sent.ok) throw new ApiError(sent.status, await sent.text())
-  for (let attempt = 0; attempt < 60; attempt += 1) {
+  for (let attempt = 0; attempt < 180; attempt += 1) {
     const media = await api<Media>(`/media/${reservation.mediaId}`, token)
     if (media.status === 'READY' || media.status === 'FAILED') return media
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 5000))
   }
-  throw new Error('Processing did not finish within 60 seconds')
+  throw new Error('Processing did not finish within 15 minutes')
 }

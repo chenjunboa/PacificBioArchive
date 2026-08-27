@@ -18,12 +18,26 @@ class Settings(BaseSettings):
     cognito_user_pool_id: str = ""
     cognito_client_id: str = ""
     cognito_issuer: str = ""
+    table_name: str = ""
+    media_bucket: str = ""
+    notification_topic_arn: str = ""
+    aws_region: str = "us-east-1"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    presigned_url_ttl_seconds: int = 900
     max_image_bytes: int = 20 * 1024 * 1024
     max_video_bytes: int = 100 * 1024 * 1024
 
     @property
     def database_path(self) -> Path:
         return self.local_data_dir / "bioarchive.sqlite3"
+
+    @property
+    def is_cloud(self) -> bool:
+        return self.app_env == "cloud"
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 @lru_cache

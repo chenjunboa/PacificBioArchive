@@ -7,10 +7,11 @@ from uuid import uuid4
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from mangum import Mangum
 
 from .auth import AuthService, current_user, get_auth_service
+from .cloud import DynamoDBRepository, S3Storage, SNSNotificationService
 from .config import Settings, get_settings
 from .domain import (
     BulkTagRequest,
@@ -42,14 +43,24 @@ from .services import (
 class Container:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.repository = SQLiteRepository(settings.database_path)
-        self.storage = LocalStorage(settings.local_data_dir)
         self.inference = InferenceClient(settings)
-        self.notifications = NotificationService(settings.local_data_dir, self.repository)
         self.query_files = QueryFileStore()
-        self.processor = MediaProcessor(
-            self.repository, self.storage, self.inference, self.notifications
-        )
+        if settings.is_cloud:
+            self.repository = DynamoDBRepository(settings.table_name, settings.aws_region)
+            self.storage = S3Storage(
+                settings.media_bucket,
+                settings.aws_region,
+                settings.presigned_url_ttl_seconds,
+            )
+            self.notifications = SNSNotificationService(settings.notification_topic_arn)
+            self.processor = None
+        else:
+            self.repository = SQLiteRepository(settings.database_path)
+            self.storage = LocalStorage(settings.local_data_dir)
+            self.notifications = NotificationService(settings.local_data_dir, self.repository)
+            self.processor = MediaProcessor(
+                self.repository, self.storage, self.inference, self.notifications
+            )
 
 
 @lru_cache
@@ -60,14 +71,26 @@ def get_container() -> Container:
 def media_id_from_url(value: str) -> str:
     if re.fullmatch(r"[0-9a-fA-F-]{36}", value):
         return value
-    match = re.search(r"/media/([0-9a-fA-F-]{36})(?:/|$)", value)
+    match = re.search(r"/(?:media|originals)/([0-9a-fA-F-]{36})(?:/|$)", value)
     if not match:
         raise HTTPException(status_code=422, detail=f"Cannot resolve media URL: {value}")
     return match.group(1)
 
 
-def to_view(request: Request, record: dict) -> MediaView:
-    base = str(request.base_url).rstrip("/") + get_settings().api_prefix
+def to_view(request: Request, record: dict, container: Container) -> MediaView:
+    base = str(request.base_url).rstrip("/") + container.settings.api_prefix
+    if container.settings.is_cloud:
+        original_url = container.storage.read_url(record.get("object_path"))
+        thumbnail_url = container.storage.read_url(record.get("thumbnail_path"))
+    else:
+        original_url = (
+            f"{base}/media/{record['media_id']}/content" if record.get("object_path") else None
+        )
+        thumbnail_url = (
+            f"{base}/media/{record['media_id']}/thumbnail"
+            if record.get("thumbnail_path")
+            else None
+        )
     return MediaView(
         mediaId=record["media_id"],
         owner=record["owner"],
@@ -77,12 +100,8 @@ def to_view(request: Request, record: dict) -> MediaView:
         checksumSha256=record["checksum"],
         status=record["status"],
         tags=record["tags"],
-        originalUrl=f"{base}/media/{record['media_id']}/content"
-        if record.get("object_path")
-        else None,
-        thumbnailUrl=(
-            f"{base}/media/{record['media_id']}/thumbnail" if record.get("thumbnail_path") else None
-        ),
+        originalUrl=original_url,
+        thumbnailUrl=thumbnail_url,
         modelVersion=record.get("model_version"),
         error=record.get("error"),
         createdAt=record["created_at"],
@@ -94,7 +113,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Pacific BioArchive API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        allow_origins=settings.allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -131,6 +150,8 @@ def create_app() -> FastAPI:
         if payload.size > limit:
             raise HTTPException(status_code=413, detail=f"File exceeds {limit} byte limit")
         media_id = str(uuid4())
+        object_key = container.storage.media_key(media_id, payload.filename)
+        object_path = container.storage.uri(object_key) if settings.is_cloud else None
         try:
             container.repository.reserve_media(
                 {
@@ -140,6 +161,7 @@ def create_app() -> FastAPI:
                     "content_type": payload.contentType,
                     "size": payload.size,
                     "checksum": payload.checksumSha256.lower(),
+                    "object_path": object_path,
                 }
             )
         except DuplicateChecksumError as exc:
@@ -147,6 +169,21 @@ def create_app() -> FastAPI:
                 status_code=409,
                 detail={"message": "Duplicate file", "existingMediaId": exc.media_id},
             ) from exc
+        if settings.is_cloud:
+            upload = container.storage.create_upload(
+                media_id,
+                object_key,
+                payload.contentType,
+                payload.size,
+                payload.checksumSha256.lower(),
+            )
+            return UploadInitResponse(
+                mediaId=media_id,
+                uploadUrl=upload["url"],
+                objectKey=object_key,
+                uploadMethod="POST",
+                uploadFields=upload["fields"],
+            )
         return UploadInitResponse(
             mediaId=media_id,
             uploadUrl=f"{prefix}/uploads/{media_id}/content",
@@ -161,6 +198,8 @@ def create_app() -> FastAPI:
         user: User = Depends(current_user),
         container: Container = Depends(get_container),
     ) -> dict:
+        if container.settings.is_cloud:
+            raise HTTPException(status_code=404, detail="Cloud uploads go directly to S3")
         record = container.repository.get_media(media_id)
         if not record:
             raise HTTPException(status_code=404, detail="Upload reservation not found")
@@ -192,17 +231,21 @@ def create_app() -> FastAPI:
         record = container.repository.get_media(media_id)
         if not record:
             raise HTTPException(status_code=404, detail="Media not found")
-        return to_view(request, record)
+        return to_view(request, record, container)
 
     @app.get(f"{prefix}/media/{{media_id}}/content")
     def get_content(
         media_id: str,
         _: User = Depends(current_user),
         container: Container = Depends(get_container),
-    ) -> FileResponse:
+    ) -> Response:
         record = container.repository.get_media(media_id)
         if not record or not record.get("object_path"):
             raise HTTPException(status_code=404, detail="Content not found")
+        if container.settings.is_cloud:
+            return RedirectResponse(
+                container.storage.read_url(record["object_path"]), status_code=307
+            )
         return FileResponse(record["object_path"], media_type=record["content_type"])
 
     @app.get(f"{prefix}/media/{{media_id}}/thumbnail")
@@ -210,16 +253,22 @@ def create_app() -> FastAPI:
         media_id: str,
         _: User = Depends(current_user),
         container: Container = Depends(get_container),
-    ) -> FileResponse:
+    ) -> Response:
         record = container.repository.get_media(media_id)
         if not record or not record.get("thumbnail_path"):
             raise HTTPException(status_code=404, detail="Thumbnail not found")
+        if container.settings.is_cloud:
+            return RedirectResponse(
+                container.storage.read_url(record["thumbnail_path"]), status_code=307
+            )
         return FileResponse(record["thumbnail_path"], media_type="image/jpeg")
 
     def query_views(
         required: dict[str, int], request: Request, container: Container
     ) -> list[MediaView]:
-        return [to_view(request, row) for row in container.repository.find_by_tags(required)]
+        return [
+            to_view(request, row, container) for row in container.repository.find_by_tags(required)
+        ]
 
     @app.post(f"{prefix}/queries/tags", response_model=list[MediaView])
     def query_tags(
@@ -250,7 +299,10 @@ def create_app() -> FastAPI:
         record = container.repository.get_media(media_id)
         if not record or not record.get("thumbnail_path"):
             raise HTTPException(status_code=404, detail="Thumbnail mapping not found")
-        return {"mediaId": media_id, "originalUrl": to_view(request, record).originalUrl}
+        return {
+            "mediaId": media_id,
+            "originalUrl": to_view(request, record, container).originalUrl,
+        }
 
     @app.post(f"{prefix}/queries/file/init")
     def query_file_init(
@@ -258,6 +310,11 @@ def create_app() -> FastAPI:
         user: User = Depends(current_user),
         container: Container = Depends(get_container),
     ) -> dict:
+        if container.settings.is_cloud:
+            raise HTTPException(
+                status_code=501,
+                detail="Temporary S3 query uploads are completed in the stage-three handoff",
+            )
         item = container.query_files.create(
             user.sub, payload.filename, payload.contentType, payload.size
         )
@@ -273,6 +330,8 @@ def create_app() -> FastAPI:
         user: User = Depends(current_user),
         container: Container = Depends(get_container),
     ) -> Response:
+        if container.settings.is_cloud:
+            raise HTTPException(status_code=404, detail="Cloud query uploads go directly to S3")
         item = container.query_files.get(query_id)
         if not item:
             raise HTTPException(status_code=404, detail="Query reservation not found")
@@ -293,6 +352,11 @@ def create_app() -> FastAPI:
         user: User = Depends(current_user),
         container: Container = Depends(get_container),
     ) -> list[MediaView]:
+        if container.settings.is_cloud:
+            raise HTTPException(
+                status_code=501,
+                detail="Temporary S3 query execution is completed in the stage-three handoff",
+            )
         item = container.query_files.get(query_id)
         if not item or not item.path:
             raise HTTPException(status_code=404, detail="Uploaded query file not found")
