@@ -278,7 +278,7 @@ resource "aws_lambda_function" "worker_zip" {
   function_name    = "${local.prefix}-member3-worker"
   role             = local.lambda_role_arn
   filename         = "${path.module}/build/member3-worker.zip"
-  source_code_hash = filebase64sha256("${path.module}/build/member3-worker.zip")
+  source_code_hash = var.deploy_zip_worker ? filebase64sha256("${path.module}/build/member3-worker.zip") : null
   handler          = "member3_lambda.handler"
   runtime          = "python3.12"
   timeout          = 120

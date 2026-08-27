@@ -92,6 +92,7 @@ Member 3's branch or tags.
 
 Remaining validation:
 
-- Full `pytest` and `ruff` still need a Python 3.12 environment with project dependencies installed.
-- `terraform validate` still needs `terraform init` because AWS/Google provider plugins are not cached.
+- Python tests and Ruff passed locally after installing project dependencies into `.venv`.
+- React production build passed locally after `npm ci`.
+- Terraform `fmt -check` and `validate` passed after `terraform init -backend=false`.
 - Real AWS/GCP verification is still required before claiming cloud acceptance in the report.
