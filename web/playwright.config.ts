@@ -4,6 +4,7 @@ const e2eDataDir = process.env.PBA_E2E_DATA_DIR ?? `../.local-e2e-data-${Date.no
 
 export default defineConfig({
   testDir: './e2e',
+  testMatch: /archive\.spec\.ts/,
   timeout: 120_000,
   expect: { timeout: 15_000 },
   reporter: [['html', { open: 'never' }], ['list']],

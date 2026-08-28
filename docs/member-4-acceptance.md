@@ -14,6 +14,7 @@ verification before the assignment report can claim final acceptance.
 | Media management | Complete locally | Owner-only controls, bulk tag add/remove, delete confirmation, and delete result messaging are implemented. |
 | Notifications UI | Complete locally | Subscribe and unsubscribe actions show success/failure messages and explain SNS email confirmation. |
 | Local E2E | Complete | `npm run test:e2e` covers login, image upload to READY, duplicate 409, tag query, species query, thumbnail query, file query, tag add/remove, non-owner 403, delete, and signed-out 401. |
+| Cloud smoke runner | Prepared | `npm run test:e2e:cloud` runs against a deployed URL when the required `PBA_CLOUD_*` environment variables are provided. |
 | Demo script | Complete | `docs/demo-script.md` contains the minute-by-minute rehearsal script, demo image checksums, evidence checklist, cold-start fallback, and cleanup checklist. |
 
 ## Latest local validation
@@ -51,7 +52,7 @@ as complete in the report until the evidence exists.
 
 1. Run `npm run test:e2e` once more from clean `main` immediately before cloud rehearsal.
 2. Ask the AWS/GCP account holder to confirm the deployed URLs and Cognito test users.
-3. Execute `docs/demo-script.md` twice, saving redacted screenshots or Playwright videos.
+3. Run `docs/cloud-smoke-evidence.md` twice, then execute `docs/demo-script.md`, saving redacted screenshots or Playwright videos.
 4. Fill the group report with only verified claims.
 5. Ask Member 1 to review the release candidate.
 6. Create `release-candidate-1`, then final `v1.0.0` only after all members confirm.
