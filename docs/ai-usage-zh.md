@@ -39,3 +39,23 @@
   返回 403，Worker 通过 WIF 调用私有 Cloud Run `/infer` 返回 200，页面最终显示识别完成。
 - 限制：AI 没有接触或保存账号密码、MFA、邮箱验证码、云 token 或模型权重；第三位成员范围内
   的完整索引、查询、并发租约、订阅、删除一致性和故障注入测试仍需按独立 Issue 完成。
+
+## 2026年8月28日——第四位成员 UI、E2E 和最终演示准备
+
+- 使用的 AI 工具：OpenAI Codex。
+- 用途：审计第三位成员交接代码与第四位成员清单的差距，补齐云端查询/索引稳定性、本地和云端
+  UI 工作流、Playwright 本地端到端测试、演示脚本和验收状态记录。
+- 涉及内容：DynamoDB 标签索引、缩略图映射、临时查询文件、删除清理、AWS 到 GCP WIF 调用配置、
+  React 登录/上传/四类查询/媒体管理/通知页面、Playwright E2E、`docs/demo-script.md` 和
+  `docs/member-4-acceptance.md`。
+- 人工责任：第四位成员需要亲自阅读这些提交和文档，用自己的 GitHub 账号确认 commit/merge，
+  并在真实 AWS/GCP 部署中完成两轮云端冒烟测试、邮箱确认、截图/视频和报告文字复核。
+- 本人检查和修改：本地配置 Git author 为 `pb-monash <bpan0043@student.monash.edu>`；逐步运行
+  单元测试、Ruff、前端构建、Terraform validate、浏览器页面检查和 Playwright E2E；只把本地已
+  验证内容写为完成，不把缺少账号凭据的云端验证写成已通过。
+- 最终测试证据：`npm run test:e2e` 通过 1 项完整本地流程；`npm run build` 通过；
+  `.venv/bin/python -m pytest -q` 通过 17 项测试；Ruff 通过；`terraform -chdir=infra validate`
+  通过。
+- 限制：AI 没有接触或保存 AWS/GCP 凭据、Cognito 测试用户密码、邮箱验证码、JWT、预签名 URL
+  查询参数或 Terraform state。真实云端两轮关键路径、短视频证据、SNS 邮箱确认和最终 release
+  tag 仍需小组在提交前完成。
