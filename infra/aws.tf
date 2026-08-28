@@ -267,6 +267,34 @@ resource "aws_lambda_event_source_mapping" "worker" {
   function_response_types = ["ReportBatchItemFailures"]
 }
 
+# Docker-free deployment path for Member 3's S3 -> SQS -> DynamoDB workflow.
+# Run infra/build-member3-worker.ps1 before Terraform apply to generate the ZIP.
+resource "aws_lambda_function" "worker_zip" {
+  count            = var.deploy_zip_worker ? 1 : 0
+  function_name    = "${local.prefix}-member3-worker"
+  role             = local.lambda_role_arn
+  filename         = "${path.module}/build/member3-worker.zip"
+  source_code_hash = filebase64sha256("${path.module}/build/member3-worker.zip")
+  handler          = "member3_lambda.handler"
+  runtime          = "python3.12"
+  timeout          = 120
+  memory_size      = 1024
+  environment {
+    variables = {
+      TABLE_NAME        = aws_dynamodb_table.archive.name
+      MEDIA_BUCKET      = aws_s3_bucket.media.id
+      ENABLE_THUMBNAILS = "false"
+    }
+  }
+}
+resource "aws_lambda_event_source_mapping" "worker_zip" {
+  count                   = var.deploy_zip_worker ? 1 : 0
+  event_source_arn        = aws_sqs_queue.jobs.arn
+  function_name           = aws_lambda_function.worker_zip[0].arn
+  batch_size              = 1
+  function_response_types = ["ReportBatchItemFailures"]
+}
+
 resource "aws_apigatewayv2_api" "http" {
   name          = "${local.prefix}-api"
   protocol_type = "HTTP"
