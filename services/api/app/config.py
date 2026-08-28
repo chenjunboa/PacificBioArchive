@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     local_data_dir: Path = Path(".local-data")
     inference_mode: str = "stub"
     inference_url: str = "http://localhost:8081"
+    gcp_wif_audience: str = ""
+    gcp_wif_service_account: str = ""
     model_version: str = "local-stub-v1"
     labels_path: Path = Path("labels.txt")
     cognito_user_pool_id: str = ""

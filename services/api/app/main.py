@@ -295,7 +295,12 @@ def create_app() -> FastAPI:
         _: User = Depends(current_user),
         container: Container = Depends(get_container),
     ) -> dict:
-        media_id = media_id_from_url(payload.thumbnailUrl)
+        if container.settings.is_cloud:
+            media_id = container.repository.media_id_for_thumbnail(payload.thumbnailUrl)
+            if not media_id:
+                raise HTTPException(status_code=404, detail="Thumbnail mapping not found")
+        else:
+            media_id = media_id_from_url(payload.thumbnailUrl)
         record = container.repository.get_media(media_id)
         if not record or not record.get("thumbnail_path"):
             raise HTTPException(status_code=404, detail="Thumbnail mapping not found")
@@ -311,10 +316,27 @@ def create_app() -> FastAPI:
         container: Container = Depends(get_container),
     ) -> dict:
         if container.settings.is_cloud:
-            raise HTTPException(
-                status_code=501,
-                detail="Temporary S3 query uploads are completed in the stage-three handoff",
+            query_id = str(uuid4())
+            object_key = container.storage.query_key(query_id, payload.filename)
+            object_uri = container.storage.uri(object_key)
+            item = container.repository.create_query_file(
+                query_id,
+                user.sub,
+                payload.filename,
+                payload.contentType,
+                payload.size,
+                object_uri,
             )
+            upload = container.storage.create_query_upload(
+                object_key, payload.contentType, payload.size
+            )
+            return {
+                "queryId": item.query_id,
+                "uploadUrl": upload["url"],
+                "objectKey": object_key,
+                "uploadMethod": "POST",
+                "uploadFields": upload["fields"],
+            }
         item = container.query_files.create(
             user.sub, payload.filename, payload.contentType, payload.size
         )
@@ -331,7 +353,9 @@ def create_app() -> FastAPI:
         container: Container = Depends(get_container),
     ) -> Response:
         if container.settings.is_cloud:
-            raise HTTPException(status_code=404, detail="Cloud query uploads go directly to S3")
+            raise HTTPException(
+                status_code=404, detail="Cloud query uploads go directly to S3"
+            )
         item = container.query_files.get(query_id)
         if not item:
             raise HTTPException(status_code=404, detail="Query reservation not found")
@@ -353,22 +377,43 @@ def create_app() -> FastAPI:
         container: Container = Depends(get_container),
     ) -> list[MediaView]:
         if container.settings.is_cloud:
-            raise HTTPException(
-                status_code=501,
-                detail="Temporary S3 query execution is completed in the stage-three handoff",
-            )
-        item = container.query_files.get(query_id)
-        if not item or not item.path:
-            raise HTTPException(status_code=404, detail="Uploaded query file not found")
-        if item.owner != user.sub:
-            raise HTTPException(status_code=403, detail="Not the query owner")
-        try:
-            tags, _ = container.inference.detect(Path(item.path), item.filename, item.content_type)
-            required = {normalize_tag(tag): 1 for tag, count in tags.items() if count > 0}
-            return query_views(required, request, container)
-        finally:
-            container.storage.delete_query(query_id)
-            container.query_files.remove(query_id)
+            item = container.repository.get_query_file(query_id)
+            if not item or not item.path:
+                raise HTTPException(status_code=404, detail="Uploaded query file not found")
+            if item.owner != user.sub:
+                raise HTTPException(status_code=403, detail="Not the query owner")
+            path: Path | None = None
+            try:
+                path = container.storage.download_to_temp(
+                    item.path, suffix=Path(item.filename).suffix
+                )
+                tags, _ = container.inference.detect(path, item.filename, item.content_type)
+                required = {
+                    normalize_tag(tag): 1 for tag, count in tags.items() if count > 0
+                }
+                return query_views(required, request, container)
+            finally:
+                if path:
+                    path.unlink(missing_ok=True)
+                try:
+                    container.storage.delete_uri(item.path)
+                finally:
+                    container.repository.delete_query_file(query_id)
+        else:
+            item = container.query_files.get(query_id)
+            if not item or not item.path:
+                raise HTTPException(status_code=404, detail="Uploaded query file not found")
+            if item.owner != user.sub:
+                raise HTTPException(status_code=403, detail="Not the query owner")
+            try:
+                tags, _ = container.inference.detect(
+                    Path(item.path), item.filename, item.content_type
+                )
+                required = {normalize_tag(tag): 1 for tag, count in tags.items() if count > 0}
+                return query_views(required, request, container)
+            finally:
+                container.storage.delete_query(query_id)
+                container.query_files.remove(query_id)
 
     @app.post(f"{prefix}/tags/bulk")
     def bulk_tags(
@@ -423,7 +468,8 @@ def create_app() -> FastAPI:
         container: Container = Depends(get_container),
     ) -> dict:
         container.repository.upsert_subscription(user.sub, payload.tag, str(payload.email))
-        return {"tag": payload.tag, "email": str(payload.email), "status": "CONFIRMED_LOCAL"}
+        status = "PENDING_CONFIRMATION" if container.settings.is_cloud else "CONFIRMED_LOCAL"
+        return {"tag": payload.tag, "email": str(payload.email), "status": status}
 
     @app.delete(f"{prefix}/subscriptions/{{tag}}", status_code=204)
     def unsubscribe(

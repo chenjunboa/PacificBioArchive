@@ -231,7 +231,11 @@ resource "aws_lambda_function" "api" {
         ["http://localhost:5173", "http://127.0.0.1:5173"],
         var.deploy_compute ? [google_cloud_run_v2_service.web[0].uri] : []
       ))
-      NOTIFICATION_TOPIC_ARN = aws_sns_topic.notifications.arn
+      NOTIFICATION_TOPIC_ARN  = aws_sns_topic.notifications.arn
+      INFERENCE_MODE          = "http"
+      INFERENCE_URL           = var.deploy_compute ? google_cloud_run_v2_service.inference[0].uri : ""
+      GCP_WIF_AUDIENCE        = "//iam.googleapis.com/projects/${data.google_project.current.number}/locations/global/workloadIdentityPools/${google_iam_workload_identity_pool.aws.workload_identity_pool_id}/providers/${google_iam_workload_identity_pool_provider.aws.workload_identity_pool_provider_id}"
+      GCP_WIF_SERVICE_ACCOUNT = google_service_account.aws_caller.email
     }
   }
 }
@@ -274,7 +278,7 @@ resource "aws_lambda_function" "worker_zip" {
   function_name    = "${local.prefix}-member3-worker"
   role             = local.lambda_role_arn
   filename         = "${path.module}/build/member3-worker.zip"
-  source_code_hash = filebase64sha256("${path.module}/build/member3-worker.zip")
+  source_code_hash = var.deploy_zip_worker ? filebase64sha256("${path.module}/build/member3-worker.zip") : null
   handler          = "member3_lambda.handler"
   runtime          = "python3.12"
   timeout          = 120
