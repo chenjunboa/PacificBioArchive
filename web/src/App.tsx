@@ -172,11 +172,22 @@ function Login({ onLogin }: { onLogin: (token: string, email: string) => void })
   )
 }
 
-function UploadPanel({ token, onMedia }: { token: string; onMedia: (media: Media) => void }) {
+function UploadPanel({
+  token,
+  currentUserSub,
+  onMedia,
+  onManage,
+}: {
+  token: string
+  currentUserSub?: string
+  onMedia: (media: Media) => void
+  onManage: (media: Media) => void
+}) {
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<Message | null>(null)
   const [statusTrail, setStatusTrail] = useState<string[]>([])
+  const [completed, setCompleted] = useState<Media | null>(null)
 
   async function submit() {
     if (!file) return
@@ -194,6 +205,7 @@ function UploadPanel({ token, onMedia }: { token: string; onMedia: (media: Media
         }
       })
       onMedia(media)
+      setCompleted(media)
       setMessage(media.status === 'READY'
         ? { kind: 'ok', text: `Ready. Detected ${Object.keys(media.tags).length} species tag(s).` }
         : { kind: 'error', text: `${media.error ?? 'Processing failed.'} Please retry after checking the file type and cloud worker status.` })
@@ -216,6 +228,7 @@ function UploadPanel({ token, onMedia }: { token: string; onMedia: (media: Media
     <button className="primary" onClick={submit} disabled={!file || busy}>{busy ? 'Working...' : 'Upload and identify'}</button>
     {statusTrail.length > 0 && <ol className="status-steps">{statusTrail.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ol>}
     {message && <Status kind={message.kind}>{message.text}</Status>}
+    {completed && <div className="single-result"><ResultCard media={completed} token={token} currentUserSub={currentUserSub} onManage={onManage} /></div>}
   </section>
 }
 
@@ -259,6 +272,7 @@ function ResultCard({
       {media.error && <Status kind="error">{media.error}</Status>}
       <div className="card-actions">
         {media.originalUrl && <a href={media.originalUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> Open original</a>}
+        {media.thumbnailUrl && <a href={media.thumbnailUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> Open thumbnail</a>}
         {isOwner && onManage && <button onClick={() => onManage(media)}><Tags size={15} /> Manage</button>}
       </div>
     </div>
@@ -592,7 +606,7 @@ export default function App() {
     </aside>
     <main className="workspace">
       <header><div><p className="eyebrow">Cross-habitat research platform</p><h1>{navigation.find(item => item.id === tab)?.label}</h1></div><div className="cloud-badge"><span>AWS</span><i /> <span>GCP</span></div></header>
-      {tab === 'upload' && <UploadPanel token={token} onMedia={media => { setLatest(media); setTab('search') }} />}
+      {tab === 'upload' && <UploadPanel token={token} currentUserSub={currentUserSub} onMedia={setLatest} onManage={media => { setLatest(media); setTab('manage') }} />}
       {tab === 'search' && <SearchPanel token={token} currentUserSub={currentUserSub} onManage={media => { setLatest(media); setTab('manage') }} />}
       {tab === 'manage' && <ManagePanel token={token} latest={latest} currentUserSub={currentUserSub} onDeleted={mediaId => {
         if (latest?.mediaId === mediaId) setLatest(undefined)
