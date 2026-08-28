@@ -6,6 +6,7 @@ __pycache__/
 *.egg-info/
 .env
 .local-data/
+.local-e2e-data*/
 node_modules/
 web/dist/
 *.tsbuildinfo
