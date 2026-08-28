@@ -11,9 +11,10 @@ AWS API Gateway、AWS→GCP WIF、私有 Cloud Run inference、真实模型、�
 基础与 compute 资源、13 项自动测试、前端构建和 GitHub Actions 三项检查。
 
 第二位成员已在真实 AWS/GCP 环境完成图片上传与推理端到端验证。镜像 digest、资源清单、费用
-风险、清理责任和脱敏验收结果见
-[member-2-delivery.md](docs/member-2-delivery.md)。第三、第四位成员负责的完整业务适配、并发与
-故障注入测试和最终验收尚未完成。
+风险、清理责任和脱敏验收结果见 [member-2-delivery.md](docs/member-2-delivery.md)。
+第三位成员的 worker 交接和第四位成员的本地 UI/E2E 验证已经合并到 `main`。真实云端两轮冒烟
+测试、脱敏截图/视频、第一位成员 release-candidate 审查和最终 `v1.0.0` 标签仍需在提交前完成。
+第四位成员当前验收边界见 [member-4-acceptance.md](docs/member-4-acceptance.md)。
 
 ## 四个人只看各自的文档
 
