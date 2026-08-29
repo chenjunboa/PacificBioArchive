@@ -70,9 +70,10 @@ and image path are supplied through local environment variables.
 Member 4 added `docs/demo-script.md`, which gives the team a minute-by-minute demonstration flow,
 including test image checksums, duplicate upload, four query modes, notification, non-owner
 permission evidence, deletion, cold-start fallback, and cleanup. `docs/cloud-smoke-evidence.md`
-documents how to run the deployed smoke test twice and how to redact screenshots, logs, and
-Playwright reports. `docs/member-4-acceptance.md` records the boundary between repository-complete
-work and the remaining live cloud evidence.
+documents how to run the deployed smoke test twice, and `docs/evidence/member-4/README.md` defines
+the evidence filenames and redaction rules for screenshots, logs, and Playwright reports.
+`docs/member-4-acceptance.md` records the boundary between repository-complete work and the
+remaining live cloud evidence.
 
 ## Remaining evidence boundary
 
@@ -89,3 +90,4 @@ before the team creates `release-candidate-1` or the final `v1.0.0` tag.
 - `a9db514` `test(member4): add local E2E release workflow`
 - `78e4b23` `docs(member4): record acceptance status and AI usage`
 - `16da32e` `test(member4): prepare cloud smoke evidence workflow`
+- `b0cfb6d` `docs(member4): draft report contribution section`
