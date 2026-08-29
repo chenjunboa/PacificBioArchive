@@ -21,8 +21,10 @@ Use the provided `test_images.zip` from the assignment material folder.
 | Backup image upload | `test_images/Casuarius_casuarius_2.JPG` | `ee57b3ee5ac1194529137b6a72a7827cd96b536d7b770200a0d32b4abbd2216b` |
 | Query/duplicate backup | `test_images/Bos_taurus_2.JPG` | `ee3693c36f1d8c48e385c47f62df59a001d6a010e4349224d689f2f6231c6e24` |
 
-Short video evidence is still required if the deployed worker has a known-good MP4 or MOV sample.
-Record the filename, checksum, duration, and cleanup media ID before the final submission rehearsal.
+Short video processing has been validated with a 3 second MP4 generated from the `Alectura_lathami`
+image. The cloud smoke media ID was `b4c56c61-e229-4aa3-8539-8ff6e1e8f372`; the run completed and
+the delete workflow removed the video metadata and indexes. Keep the redacted summary in
+`docs/evidence/member-4/13-video-cloud-smoke-redacted.md` with the final report evidence pack.
 
 ## Minute-by-minute flow
 
@@ -52,7 +54,8 @@ revision status instead of editing DynamoDB by hand.
 
 ## Evidence checklist
 
-- Two consecutive successful runs of login, upload, READY polling, at least two query modes, and delete.
+- Two consecutive successful image runs of login, upload, READY polling, tag/thumbnail queries, and delete.
+- One successful short MP4 run of login, upload, READY polling, tag query, and delete.
 - Screenshot or Playwright video for each of the four query modes.
 - Redacted 409 duplicate response with existing media detail.
 - Redacted 403 non-owner request and response.

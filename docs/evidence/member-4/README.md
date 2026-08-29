@@ -13,11 +13,13 @@ npm run test:e2e:cloud evidence run 1: passed in 26.0s, mediaId 6e10a04c-9bb6-41
 npm run test:e2e:cloud evidence run 2: passed in 24.2s, mediaId 6f32f21a-d6e0-41af-b398-d9070430eed5
 DynamoDB cleanup check after both successful runs: Count 0
 Worker Lambda recent invocations completed successfully; media DLQ message count remained 0.
+Short MP4 cloud smoke: passed in 1.7m, mediaId b4c56c61-e229-4aa3-8539-8ff6e1e8f372, contentType video/mp4
+Short MP4 cleanup check: Count 0; media DLQ message count remained 0.
 ```
 
-No redacted screenshot or exported report files are committed here yet. Before final submission,
-copy or export the Playwright report, videos, screenshots, and CloudWatch/DynamoDB snippets that the
-group report will cite.
+The sanitized validation summaries are committed as `13-video-cloud-smoke-redacted.md` and
+`14-image-cloud-smoke-redacted.md`. Before final submission, also export any Playwright report,
+screenshots, and CloudWatch/DynamoDB snippets that the group report will cite.
 
 ## Suggested files
 
@@ -37,6 +39,8 @@ Use stable numbered names so the group report can cite each artifact clearly:
 | `10-signed-out-401-redacted.png` | Signed-out API request rejected. |
 | `11-sns-confirmation-redacted.png` | SNS email subscription confirmation evidence. |
 | `12-delete-cleanup-redacted.png` | Delete workflow and cleanup evidence. |
+| `13-video-cloud-smoke-redacted.md` | Short MP4 upload, inference, tag query, delete, and cleanup evidence. |
+| `14-image-cloud-smoke-redacted.md` | Two repeatable image cloud smoke runs with tag/thumbnail queries and cleanup evidence. |
 
 ## Redaction rules
 

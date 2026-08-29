@@ -61,9 +61,17 @@ terraform -chdir=infra validate
 
 The Playwright local E2E test covers login, image upload to `READY`, duplicate 409 handling, tag
 query, species query, thumbnail reverse query, temporary file query, tag add/remove, non-owner 403,
-delete, and signed-out 401 behaviour. A separate cloud smoke runner was prepared as
+delete, and signed-out 401 behaviour. A separate cloud smoke runner was implemented as
 `npm run test:e2e:cloud`; it runs only when deployed cloud URL, verified Cognito test user, password,
-and image path are supplied through local environment variables.
+and media path are supplied through local environment variables.
+
+On 29 August 2026, after the latest `main` API and Worker Lambda images were deployed and the
+fallback `member3-worker` trigger was disabled, the cloud smoke runner passed twice with real image
+uploads. The two runs exercised Cognito sign-in, deployed frontend upload, the protected AWS API,
+S3/SQS/Lambda processing, GCP inference through the main worker path, tag/count query, thumbnail
+reverse query, delete, signed-out UI return, and DynamoDB cleanup checks. A separate short MP4 cloud
+smoke also passed; it verified `video/mp4` upload, worker video processing, SpeciesNet tag output,
+tag query, delete, and zero remaining DynamoDB records for the video media ID.
 
 ## Release and demonstration preparation
 
@@ -72,15 +80,16 @@ including test image checksums, duplicate upload, four query modes, notification
 permission evidence, deletion, cold-start fallback, and cleanup. `docs/cloud-smoke-evidence.md`
 documents how to run the deployed smoke test twice, and `docs/evidence/member-4/README.md` defines
 the evidence filenames and redaction rules for screenshots, logs, and Playwright reports.
-`docs/member-4-acceptance.md` records the boundary between repository-complete work and the
-remaining live cloud evidence.
+`docs/member-4-acceptance.md` records the boundary between completed repository/cloud verification
+and remaining final-submission evidence tasks.
 
 ## Remaining evidence boundary
 
-The repository now contains the implemented UI, local E2E test, cloud smoke runner, and release
-documentation. However, final report claims about live cloud operation still require two successful
-deployed smoke runs, short video evidence, SNS email confirmation evidence, and first-member review
-before the team creates `release-candidate-1` or the final `v1.0.0` tag.
+The repository now contains the implemented UI, local E2E test, cloud smoke runner, release
+documentation, two successful live image smoke runs, and one successful live short MP4 smoke run.
+The final report should still avoid claiming SNS email confirmation until a mailbox confirmation
+screenshot exists. The team also still needs to export/redact report evidence, complete first-member
+review, and create `release-candidate-1` or the final `v1.0.0` tag only after all members confirm.
 
 ## Commits to cite
 
@@ -91,3 +100,4 @@ before the team creates `release-candidate-1` or the final `v1.0.0` tag.
 - `78e4b23` `docs(member4): record acceptance status and AI usage`
 - `16da32e` `test(member4): prepare cloud smoke evidence workflow`
 - `b0cfb6d` `docs(member4): draft report contribution section`
+- `85abda1` `test(member4): record live cloud smoke validation`

@@ -43,12 +43,14 @@ web npm run build: passed
 npm run test:e2e:cloud evidence run 1: passed in 26.0s, mediaId 6e10a04c-9bb6-4128-bf83-6b4cec8daa38
 npm run test:e2e:cloud evidence run 2: passed in 24.2s, mediaId 6f32f21a-d6e0-41af-b398-d9070430eed5
 DynamoDB cleanup check after both successful runs: 0 records remaining for those media IDs
+Short MP4 cloud smoke: passed in 1.7m, mediaId b4c56c61-e229-4aa3-8539-8ff6e1e8f372, contentType video/mp4
+Short MP4 cleanup check: 0 records remaining for the video media ID; media DLQ message count remained 0
 ```
 
-The live smoke runner signs in through the deployed frontend, uploads a real image, waits for the
-deployed API to return `READY` with the expected SpeciesNet tag, verifies tag/count and thumbnail
-reverse queries through the protected API using the same Cognito token, deletes the uploaded media,
-checks the media endpoint returns 404, and signs out.
+The live smoke runner signs in through the deployed frontend, uploads a real media file, waits for
+the deployed API to return `READY` with the expected SpeciesNet tag, verifies tag/count queries
+through the protected API using the same Cognito token, verifies thumbnail reverse query for images,
+deletes the uploaded media, checks the media endpoint returns 404, and signs out.
 
 ## Still required before final submission
 
@@ -57,7 +59,6 @@ as complete in the report until the evidence exists.
 
 | Remaining item | Owner | Blocking reason |
 |---|---|---|
-| Real short video evidence | Member 3 or Member 4 | A known-good MP4/MOV sample and deployed worker logs are needed. |
 | SNS confirmation screenshot | Member 4 | Requires a real email subscription and mailbox confirmation flow. |
 | Redacted screenshots/logs | All members | Use `docs/evidence/member-4/README.md` for Member 4 naming and redaction rules. Each report claim needs matching evidence without tokens, passwords, OTPs, presigned URL query strings, or account secrets. |
 | First-member review of release candidate | Member 1 | Required before creating the final release tag. |
@@ -69,9 +70,9 @@ as complete in the report until the evidence exists.
 
 ## Recommended next order
 
-1. Capture or export redacted evidence artifacts from the two successful cloud smoke runs.
-2. Add the remaining video evidence if the team wants to claim MP4/MOV processing in the report.
-3. Capture SNS subscription confirmation evidence if the team wants to claim the email notification workflow.
+1. Capture or export redacted evidence artifacts from the successful image and video cloud smoke runs.
+2. Capture SNS subscription confirmation evidence if the team wants to claim the email notification workflow.
+3. Keep the report claims aligned with the verified evidence and avoid claiming untested flows.
 4. Fill the group report with only verified claims.
 5. Ask Member 1 to review the release candidate.
 6. Create `release-candidate-1`, then final `v1.0.0` only after all members confirm.

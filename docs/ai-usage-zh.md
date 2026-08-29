@@ -51,11 +51,13 @@
 - 人工责任：第四位成员需要亲自阅读这些提交和文档，用自己的 GitHub 账号确认 commit/merge，
   并在真实 AWS/GCP 部署中完成两轮云端冒烟测试、邮箱确认、截图/视频和报告文字复核。
 - 本人检查和修改：本地配置 Git author 为 `pb-monash <bpan0043@student.monash.edu>`；逐步运行
-  单元测试、Ruff、前端构建、Terraform validate、浏览器页面检查和 Playwright E2E；只把本地已
-  验证内容写为完成，不把缺少账号凭据的云端验证写成已通过。
+  单元测试、Ruff、前端构建、Terraform validate、浏览器页面检查和 Playwright E2E；在获得
+  AWS/Cognito 访问后，更新 API/Worker Lambda 镜像，禁用抢占任务的 `member3-worker` fallback
+  触发器，并用临时 Cognito 用户运行真实云端图片和短视频冒烟测试；只把实际验证内容写为完成。
 - 最终测试证据：`npm run test:e2e` 通过 1 项完整本地流程；`npm run build` 通过；
   `.venv/bin/python -m pytest -q` 通过 17 项测试；Ruff 通过；`terraform -chdir=infra validate`
-  通过。
+  通过；真实云端两轮图片 smoke 分别通过 26.0 秒和 24.2 秒；真实云端 3 秒 MP4 smoke 通过
+  1.7 分钟；DynamoDB 对这些 smoke media ID 的清理检查为 0，媒体 DLQ 为 0。
 - 限制：AI 没有接触或保存 AWS/GCP 凭据、Cognito 测试用户密码、邮箱验证码、JWT、预签名 URL
-  查询参数或 Terraform state。真实云端两轮关键路径、短视频证据、SNS 邮箱确认和最终 release
-  tag 仍需小组在提交前完成。
+  查询参数或 Terraform state。SNS 邮箱确认、脱敏截图/日志导出、最终 release tag 和正式报告
+  PDF 仍需小组在提交前完成。

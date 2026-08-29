@@ -3,6 +3,7 @@ import { expect, request, test } from '@playwright/test'
 type Media = {
   mediaId: string
   status: string
+  contentType: string
   tags: Record<string, number>
   originalUrl?: string
   thumbnailUrl?: string
@@ -21,11 +22,12 @@ test.describe('cloud smoke workflow', () => {
     `Set ${requiredEnv.join(', ')} to run the deployed cloud smoke test.`,
   )
 
-  test('verified user can upload, query, and delete an image in the deployed app', async ({ page }) => {
+  test('verified user can upload, query, and delete media in the deployed app', async ({ page }) => {
     const email = process.env.PBA_CLOUD_EMAIL!
     const password = process.env.PBA_CLOUD_PASSWORD!
     const imagePath = process.env.PBA_CLOUD_IMAGE_PATH!
     const expectedTag = process.env.PBA_CLOUD_EXPECTED_TAG ?? 'alectura_lathami'
+    const expectedThumbnail = process.env.PBA_CLOUD_EXPECT_THUMBNAIL !== 'false'
     const readyTimeout = Number(process.env.PBA_CLOUD_READY_TIMEOUT_MS ?? 300_000)
     let readyMedia: Media | undefined
 
@@ -51,8 +53,9 @@ test.describe('cloud smoke workflow', () => {
     expect(readyMedia).toBeTruthy()
     expect(readyMedia!.tags[expectedTag]).toBeGreaterThanOrEqual(1)
     expect(readyMedia!.originalUrl).toBeTruthy()
-    expect(readyMedia!.thumbnailUrl).toBeTruthy()
+    if (expectedThumbnail) expect(readyMedia!.thumbnailUrl).toBeTruthy()
     console.log(`cloud-smoke-media-id=${readyMedia!.mediaId}`)
+    console.log(`cloud-smoke-content-type=${readyMedia!.contentType}`)
 
     const apiBase = response.url().replace(/media\/[^/]+$/, '')
     const token = await page.evaluate(() => sessionStorage.getItem('pba-token'))
@@ -67,11 +70,13 @@ test.describe('cloud smoke workflow', () => {
     const tagMatches = await tagQuery.json() as Media[]
     expect(tagMatches.some(item => item.mediaId === readyMedia!.mediaId)).toBeTruthy()
 
-    const thumbnailQuery = await api.post('queries/thumbnail', {
-      data: { thumbnailUrl: readyMedia!.thumbnailUrl },
-    })
-    expect(thumbnailQuery.ok()).toBeTruthy()
-    expect((await thumbnailQuery.json()).mediaId).toBe(readyMedia!.mediaId)
+    if (readyMedia!.thumbnailUrl) {
+      const thumbnailQuery = await api.post('queries/thumbnail', {
+        data: { thumbnailUrl: readyMedia!.thumbnailUrl },
+      })
+      expect(thumbnailQuery.ok()).toBeTruthy()
+      expect((await thumbnailQuery.json()).mediaId).toBe(readyMedia!.mediaId)
+    }
 
     const deleted = await api.delete('media', { data: { urls: [readyMedia!.originalUrl] } })
     expect(deleted.ok()).toBeTruthy()
