@@ -1,7 +1,4 @@
-# Pacific BioArchive Team Report Draft
-
-> Replace every `TODO` before PDF export. The team report must stay within 1000 words excluding
-> diagrams, screenshots, tables, and references.
+# Pacific BioArchive Team Report
 
 ## Team Details
 
@@ -9,10 +6,10 @@ Private repository: https://github.com/chenjunboa/PacificBioArchive
 
 | Student name and ID | Contribution | Project elements contributed |
 |---|---:|---|
-| TODO Member 1 name, TODO student ID | 25% | Local prototype, baseline REST API, SQLite/local storage workflow, initial React UI, model/inference scaffold, Terraform skeleton, repository structure, handoff documentation, and first working local validation. |
-| Bingyi Wang, TODO student ID / bwan0113 | 25% | AWS/GCP deployment foundation, Cognito, API Gateway, Lambda API/Worker images, S3, SQS/DLQ, DynamoDB, SNS topic, private GCP Cloud Run inference, Artifact Registry/GCS model bundle, WIF, cost and cleanup documentation. |
-| TODO Member 3 name, TODO student ID / dche0133 | 25% | S3-to-SQS worker handoff, Docker-free Lambda fallback, media status processing, backend task ownership for DynamoDB/S3/SQS worker, query/index/delete requirements, and issue-based backend completion planning. |
-| Bo Pang, TODO student ID / bpan0043 | 25% | Final UI integration, Cognito frontend flow, upload/query/manage/notification pages, DynamoDB tag and thumbnail index stabilization, cloud smoke runner, local E2E, live image/video cloud validation, evidence and report preparation. |
+| Junbo Chen, 36970271 | 25% | Local prototype, baseline REST API, SQLite/local storage workflow, initial React UI, model/inference scaffold, Terraform skeleton, repository structure, handoff documentation, and first working local validation. |
+| Bingyi Wang, 36668397 | 25% | AWS/GCP deployment foundation, Cognito, API Gateway, Lambda API/Worker images, S3, SQS/DLQ, DynamoDB, SNS topic, private GCP Cloud Run inference, Artifact Registry/GCS model bundle, WIF, cost and cleanup documentation. |
+| Duo Chen, 36668222 | 25% | S3-to-SQS worker handoff, Docker-free Lambda fallback, media status processing, backend task ownership for DynamoDB/S3/SQS worker, query/index/delete requirements, and issue-based backend completion planning. |
+| Bo Pang, 36969842 | 25% | Final UI integration, Cognito frontend flow, upload/query/manage/notification pages, DynamoDB tag and thumbnail index stabilization, cloud smoke runner, local E2E, live image/video cloud validation, evidence and report preparation. |
 
 ## Architecture
 

@@ -1,6 +1,6 @@
 # Final submission readiness
 
-Last updated: 2026-08-29
+Last updated: 2026-08-30
 
 ## Completed by repository and cloud validation
 
@@ -34,11 +34,14 @@ that happens.
 |---|---|---|
 | SNS email confirmation | Pending | `bpan0043@student.monash.edu` has a pending AWS SNS confirmation email. Open the email and click `Confirm subscription`, then re-run the SNS status check. |
 | SNS screenshot | Pending | After confirmation, capture a redacted screenshot showing the confirmed subscription or confirmation email. Hide token-like links and private details. |
-| Team member names and student IDs | Pending | Replace every `TODO` in `docs/final-team-report-draft.md` and `docs/final-individual-report-member4-draft.md`. |
+| Team member names and student IDs | Complete | Team supplied and verified all four formal names and student IDs on 30 August 2026. |
 | Member 1 review | Complete | Review record: `docs/member-1-release-review.md`. |
-| `release-candidate-1` tag | Ready | Create on the reviewed commit after its GitHub Actions checks pass. |
+| `release-candidate-1` tag | Complete | Tag points to reviewed commit `95a06e2`; all four GitHub Actions jobs passed. |
 | `v1.0.0` tag | Waiting on team acceptance | Create only after all members accept the final state. |
-| Final PDFs | Waiting on missing details | Export the team report and individual report to PDF after TODO values and diagram are inserted. |
+| Final team PDF | Complete | `output/final/Pacific-BioArchive-Team-Report.pdf` was rendered and visually checked page by page. |
+| Member 1 individual PDF | Complete | `output/final/Junbo-Chen-Individual-Report.pdf` was rendered and visually checked page by page. |
+| Member 4 individual PDF | Complete | `output/final/Bo-Pang-Individual-Report.pdf` was rendered and visually checked page by page. |
+| Member 2/3 individual reports | External | Bingyi Wang and Duo Chen must review and submit their own individual reports through the individual submission link. |
 
 ## Commands for the final human checks
 

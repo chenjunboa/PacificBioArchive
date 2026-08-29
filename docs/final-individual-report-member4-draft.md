@@ -1,9 +1,7 @@
-# Member 4 Individual Report Draft
+# Member 4 Individual Report
 
-> Replace `TODO student ID` before PDF export. The individual report target is 500 words.
-
-Name: Bo Pang  
-Student ID: TODO student ID  
+Name: Bo Pang
+Student ID: 36969842
 Repository: https://github.com/chenjunboa/PacificBioArchive
 
 ## Role and Contribution

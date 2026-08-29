@@ -28,3 +28,4 @@ mg_detections.json
 cropped_images/
 .model-bundles/
 .idea/
+tmp/

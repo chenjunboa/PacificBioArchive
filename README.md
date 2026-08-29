@@ -18,6 +18,8 @@ AWS API Gateway、AWS→GCP WIF、私有 Cloud Run inference、真实模型、�
 第四位成员当前验收边界见 [member-4-acceptance.md](docs/member-4-acceptance.md)，最终提交前
 剩余人工确认项见 [final-submission-readiness.md](docs/final-submission-readiness.md)。
 
+最终团队报告、Member 1 与 Member 4 个人报告位于 [`output/final/`](output/final/)。
+
 ## 四个人只看各自的文档
 
 | 成员 | 工作内容 | 执行文档 |
