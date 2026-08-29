@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#f59e0b"/></marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#16a34a"/></marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#64748b"/></marker>
+    <style>
+      .title{font:700 34px Arial,sans-serif;fill:#0f172a}.subtitle{font:18px Arial,sans-serif;fill:#475569}
+      .cloud-title{font:700 23px Arial,sans-serif}.node-title{font:700 17px Arial,sans-serif;fill:#0f172a}
+      .node-sub{font:14px Arial,sans-serif;fill:#475569}.edge{font:13px Arial,sans-serif;fill:#334155}
+      .small{font:12px Arial,sans-serif;fill:#64748b}.legend{font:14px Arial,sans-serif;fill:#334155}
+      .node{fill:#fff;stroke:#cbd5e1;stroke-width:1.5;rx:14}.aws-boundary{fill:#fffaf0;stroke:#f59e0b;stroke-width:3;rx:24}
+      .gcp-boundary{fill:#f5f9ff;stroke:#4285f4;stroke-width:3;rx:24}.neutral-boundary{fill:#f8fafc;stroke:#94a3b8;stroke-width:2;rx:20}
+      .flow-blue{fill:none;stroke:#2563eb;stroke-width:3;marker-end:url(#arrow-blue)}
+      .flow-orange{fill:none;stroke:#f59e0b;stroke-width:3;marker-end:url(#arrow-orange)}
+      .flow-green{fill:none;stroke:#16a34a;stroke-width:3;marker-end:url(#arrow-green)}
+      .flow-gray{fill:none;stroke:#64748b;stroke-width:2.5;stroke-dasharray:8 7;marker-end:url(#arrow-gray)}
+    </style>
+  </defs>
+
+  <rect width="1800" height="1120" fill="#ffffff"/>
+  <text x="900" y="48" text-anchor="middle" class="title">Pacific BioArchive - Multi-Cloud Serverless Architecture</text>
+  <text x="900" y="78" text-anchor="middle" class="subtitle">Authenticated media ingestion, asynchronous ML tagging, indexed queries and tag-based notifications</text>
+
+  <rect x="35" y="125" width="235" height="850" class="neutral-boundary"/>
+  <text x="152" y="163" text-anchor="middle" class="cloud-title" fill="#334155">Researcher</text>
+  <rect x="70" y="370" width="165" height="118" class="node"/>
+  <rect x="91" y="391" width="123" height="69" rx="5" fill="#e2e8f0" stroke="#475569" stroke-width="3"/>
+  <line x1="91" y1="409" x2="214" y2="409" stroke="#475569" stroke-width="2"/>
+  <circle cx="101" cy="400" r="3" fill="#ef4444"/><circle cx="112" cy="400" r="3" fill="#f59e0b"/><circle cx="123" cy="400" r="3" fill="#22c55e"/>
+  <text x="152" y="479" text-anchor="middle" class="node-title">Browser</text>
+  <text x="152" y="512" text-anchor="middle" class="node-sub">Upload / Query / Manage</text>
+
+  <rect x="300" y="125" width="970" height="850" class="aws-boundary"/>
+  <text x="330" y="163" class="cloud-title" fill="#c45500">AWS - us-east-1</text>
+
+  <rect x="330" y="200" width="180" height="145" class="node"/>
+  <image href="official-icons/aws-cognito.svg" x="390" y="218" width="60" height="60"/>
+  <text x="420" y="300" text-anchor="middle" class="node-title">Amazon Cognito</text>
+  <text x="420" y="324" text-anchor="middle" class="node-sub">Sign-up / JWT / Email verify</text>
+
+  <rect x="555" y="350" width="175" height="145" class="node"/>
+  <image href="official-icons/aws-api-gateway.svg" x="612" y="368" width="60" height="60"/>
+  <text x="642" y="450" text-anchor="middle" class="node-title">API Gateway</text>
+  <text x="642" y="474" text-anchor="middle" class="node-sub">JWT authorizer + REST API</text>
+
+  <rect x="785" y="350" width="175" height="145" class="node"/>
+  <image href="official-icons/aws-lambda.svg" x="842" y="368" width="60" height="60"/>
+  <text x="872" y="450" text-anchor="middle" class="node-title">API Lambda</text>
+  <text x="872" y="474" text-anchor="middle" class="node-sub">Presigned URLs / Queries</text>
+
+  <rect x="1020" y="255" width="180" height="145" class="node"/>
+  <image href="official-icons/aws-s3.svg" x="1080" y="273" width="60" height="60"/>
+  <text x="1110" y="355" text-anchor="middle" class="node-title">Amazon S3</text>
+  <text x="1110" y="379" text-anchor="middle" class="node-sub">Originals / Thumbnails / Temp</text>
+
+  <rect x="1020" y="500" width="180" height="145" class="node"/>
+  <image href="official-icons/aws-sqs.svg" x="1080" y="518" width="60" height="60"/>
+  <text x="1110" y="600" text-anchor="middle" class="node-title">Amazon SQS + DLQ</text>
+  <text x="1110" y="624" text-anchor="middle" class="node-sub">At-least-once media jobs</text>
+
+  <rect x="785" y="560" width="175" height="145" class="node"/>
+  <image href="official-icons/aws-lambda.svg" x="842" y="578" width="60" height="60"/>
+  <text x="872" y="660" text-anchor="middle" class="node-title">Worker Lambda</text>
+  <text x="872" y="684" text-anchor="middle" class="node-sub">Thumbnail / 1 fps / Indexes</text>
+
+  <rect x="540" y="710" width="190" height="145" class="node"/>
+  <image href="official-icons/aws-dynamodb.svg" x="605" y="728" width="60" height="60"/>
+  <text x="635" y="810" text-anchor="middle" class="node-title">Amazon DynamoDB</text>
+  <text x="635" y="834" text-anchor="middle" class="node-sub">MEDIA / TAG / THUMB / LOCK</text>
+
+  <rect x="790" y="790" width="180" height="145" class="node"/>
+  <image href="official-icons/aws-sns.svg" x="850" y="808" width="60" height="60"/>
+  <text x="880" y="890" text-anchor="middle" class="node-title">Amazon SNS</text>
+  <text x="880" y="914" text-anchor="middle" class="node-sub">Tag-based email</text>
+
+  <rect x="1020" y="790" width="180" height="145" class="node"/>
+  <image href="official-icons/aws-ecr.svg" x="1080" y="808" width="60" height="60"/>
+  <text x="1110" y="890" text-anchor="middle" class="node-title">Amazon ECR</text>
+  <text x="1110" y="914" text-anchor="middle" class="node-sub">API + Worker images</text>
+
+  <rect x="1300" y="125" width="465" height="850" class="gcp-boundary"/>
+  <text x="1330" y="163" class="cloud-title" fill="#1a73e8">Google Cloud - us-central1</text>
+
+  <rect x="1335" y="200" width="190" height="145" class="node"/>
+  <image href="official-icons/gcp-cloud-run.svg" x="1400" y="218" width="60" height="60"/>
+  <text x="1430" y="300" text-anchor="middle" class="node-title">Cloud Run Web</text>
+  <text x="1430" y="324" text-anchor="middle" class="node-sub">React / Amplify UI (public)</text>
+
+  <rect x="1335" y="410" width="190" height="145" class="node"/>
+  <image href="official-icons/gcp-workload-identity.svg" x="1400" y="428" width="60" height="60"/>
+  <text x="1430" y="510" text-anchor="middle" class="node-title">Workload Identity</text>
+  <text x="1430" y="534" text-anchor="middle" class="node-sub">AWS role - short-lived token</text>
+
+  <rect x="1545" y="410" width="190" height="145" class="node"/>
+  <image href="official-icons/gcp-cloud-run.svg" x="1610" y="428" width="60" height="60"/>
+  <text x="1640" y="510" text-anchor="middle" class="node-title">Cloud Run Inference</text>
+  <text x="1640" y="534" text-anchor="middle" class="node-sub">MegaDetector + SpeciesNet</text>
+
+  <rect x="1545" y="650" width="190" height="145" class="node"/>
+  <image href="official-icons/gcp-cloud-storage.svg" x="1610" y="668" width="60" height="60"/>
+  <text x="1640" y="750" text-anchor="middle" class="node-title">Cloud Storage</text>
+  <text x="1640" y="774" text-anchor="middle" class="node-sub">Manifest / Models / Labels</text>
+
+  <rect x="1335" y="790" width="190" height="145" class="node"/>
+  <image href="official-icons/gcp-artifact-registry.svg" x="1400" y="808" width="60" height="60"/>
+  <text x="1430" y="890" text-anchor="middle" class="node-title">Artifact Registry</text>
+  <text x="1430" y="914" text-anchor="middle" class="node-sub">Web + Inference images</text>
+
+  <!-- Interactive path -->
+  <path d="M235 395 L270 395 L270 105 L1430 105 L1430 200" class="flow-blue"/>
+  <text x="850" y="98" text-anchor="middle" class="edge">1. Load public React application over HTTPS</text>
+  <path d="M235 425 C275 350, 300 295, 330 270" class="flow-blue"/>
+  <text x="275" y="342" class="edge">2. Sign up / sign in</text>
+  <path d="M235 455 C350 455, 460 422, 555 422" class="flow-blue"/>
+  <text x="360" y="442" class="edge">3. REST request + JWT</text>
+  <path d="M510 285 C570 295, 610 320, 630 350" class="flow-blue" stroke-dasharray="8 7"/>
+  <text x="570" y="286" class="edge">JWT validation</text>
+  <path d="M730 422 L785 422" class="flow-blue"/>
+  <text x="758" y="409" text-anchor="middle" class="edge">4</text>
+  <path d="M960 395 L1020 340" class="flow-blue"/>
+  <text x="974" y="327" class="edge">Presigned URLs</text>
+  <path d="M820 495 C760 565, 685 635, 650 710" class="flow-blue"/>
+  <text x="690" y="605" class="edge">Metadata / queries</text>
+
+  <!-- Async media path -->
+  <path d="M1110 400 L1110 500" class="flow-orange"/>
+  <text x="1122" y="458" class="edge">ObjectCreated</text>
+  <path d="M1020 575 C990 575, 975 615, 960 630" class="flow-orange"/>
+  <text x="974" y="565" class="edge">5. Consume job</text>
+  <path d="M820 705 C785 735, 755 760, 730 780" class="flow-orange"/>
+  <path d="M890 705 L885 790" class="flow-orange"/>
+  <text x="898" y="753" class="edge">Matched tags</text>
+
+  <!-- Cross-cloud inference -->
+  <path d="M960 650 C1090 735, 1215 625, 1335 500" class="flow-green"/>
+  <text x="1160" y="735" text-anchor="middle" class="edge">6. AWS role - short-lived Google identity</text>
+  <path d="M1525 482 L1545 482" class="flow-green"/>
+  <path d="M1640 650 L1640 555" class="flow-green"/>
+  <text x="1653" y="625" class="edge">Versioned model bundle</text>
+  <text x="1535" y="585" text-anchor="middle" class="edge">7. Private inference request / response</text>
+  <text x="1535" y="606" text-anchor="middle" class="small">Media URL - species counts + model version</text>
+
+  <!-- Deployment paths -->
+  <path d="M1110 790 C1050 720, 980 650, 925 495" class="flow-gray"/>
+  <path d="M1080 790 C1040 760, 980 700, 930 680" class="flow-gray"/>
+  <path d="M1430 790 L1318 790 L1318 370 L1400 345" class="flow-gray"/>
+  <path d="M1525 850 L1745 850 L1745 600 L1680 555" class="flow-gray"/>
+
+  <!-- Email recipient -->
+  <path d="M790 865 C560 975, 335 915, 235 520" class="flow-orange"/>
+  <text x="500" y="948" class="edge">8. Confirmed tag-based email notification</text>
+
+  <!-- Legend -->
+  <rect x="35" y="1005" width="1730" height="85" rx="14" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="65" y="1037" class="node-title">Legend</text>
+  <line x1="155" y1="1032" x2="215" y2="1032" class="flow-blue"/><text x="230" y="1038" class="legend">Authenticated interactive request</text>
+  <line x1="525" y1="1032" x2="585" y2="1032" class="flow-orange"/><text x="600" y="1038" class="legend">Asynchronous media / notification event</text>
+  <line x1="970" y1="1032" x2="1030" y2="1032" class="flow-green"/><text x="1045" y="1038" class="legend">Cross-cloud WIF + private inference</text>
+  <line x1="1390" y1="1032" x2="1450" y2="1032" class="flow-gray"/><text x="1465" y="1038" class="legend">Container deployment</text>
+  <text x="900" y="1075" text-anchor="middle" class="small">Official provider icons: AWS Architecture Icons (31 Jul 2026) and Google Cloud Product Icon Library</text>
+</svg>

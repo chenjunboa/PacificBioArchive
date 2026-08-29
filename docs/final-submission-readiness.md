@@ -20,6 +20,10 @@ Last updated: 2026-08-29
   provided.
 - Member 4 evidence summaries are available under `docs/evidence/member-4/`.
 - Team and Member 4 individual report drafts are available under `docs/`.
+- The official-icon multi-cloud architecture diagram is available as editable SVG and report PNG
+  under `docs/assets/architecture/`, with provider source links recorded in `SOURCES.md`.
+- Member 1 reviewed the release candidate and fixed the Windows Playwright API startup command;
+  local Playwright E2E now passes on Windows as well as in GitHub Actions on Linux.
 
 ## Still externally blocked
 
@@ -30,10 +34,9 @@ that happens.
 |---|---|---|
 | SNS email confirmation | Pending | `bpan0043@student.monash.edu` has a pending AWS SNS confirmation email. Open the email and click `Confirm subscription`, then re-run the SNS status check. |
 | SNS screenshot | Pending | After confirmation, capture a redacted screenshot showing the confirmed subscription or confirmation email. Hide token-like links and private details. |
-| Official architecture diagram | Draft-ready | Build the final diagram using official AWS and Google Cloud architecture icons, then insert it into the team report PDF. |
 | Team member names and student IDs | Pending | Replace every `TODO` in `docs/final-team-report-draft.md` and `docs/final-individual-report-member4-draft.md`. |
-| Member 1 review | Pending | Member 1 should review the final `main` commit and evidence before release tagging. |
-| `release-candidate-1` tag | Waiting on review | Create only after Member 1 accepts the release candidate. |
+| Member 1 review | Complete | Review record: `docs/member-1-release-review.md`. |
+| `release-candidate-1` tag | Ready | Create on the reviewed commit after its GitHub Actions checks pass. |
 | `v1.0.0` tag | Waiting on team acceptance | Create only after all members accept the final state. |
 | Final PDFs | Waiting on missing details | Export the team report and individual report to PDF after TODO values and diagram are inserted. |
 

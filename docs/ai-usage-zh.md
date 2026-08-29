@@ -61,3 +61,17 @@
 - 限制：AI 没有接触或保存 AWS/GCP 凭据、Cognito 测试用户密码、邮箱验证码、JWT、预签名 URL
   查询参数或 Terraform state。SNS 邮箱确认、脱敏截图/日志导出、最终 release tag 和正式报告
   PDF 仍需小组在提交前完成。
+
+## 2026年8月29日——第一位成员发布审查与报告整理
+
+- 使用的 AI 工具：OpenAI Codex。
+- 用途：复核最新主分支、云端验证证据与提交要求；制作官方图标架构图；定位并修复跨平台
+  Playwright 启动问题；整理发布审查记录和报告草稿。
+- 涉及内容：`web/playwright.config.ts`、`web/e2e/start-local-api.mjs`、
+  `docs/assets/architecture/`、团队报告草稿和发布审查记录。
+- 人工责任：第一位成员需核对审查结论、GitHub Actions 结果及 release candidate 标签；全体成员
+  仍需确认正式姓名、学号、贡献比例和最终报告文字。
+- 最终测试证据：17 项 Python 测试通过、Ruff 通过、Terraform validate 通过、React 构建通过，
+  Windows 本地 Playwright E2E 通过；推送后再以 GitHub Actions 作为 release candidate 门禁。
+- 限制：AI 无法代替邮箱持有人点击 SNS 确认链接，也不能猜测姓名、学号或冒充全体成员批准
+  `v1.0.0`。

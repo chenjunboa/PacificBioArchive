@@ -16,20 +16,11 @@ Private repository: https://github.com/chenjunboa/PacificBioArchive
 
 ## Architecture
 
-Insert the final architecture diagram here using official AWS and Google Cloud architecture icons.
-The diagram should show:
+![Pacific BioArchive multi-cloud architecture](assets/architecture/pacific-bioarchive-architecture.png)
 
-- User browser and React web app on Google Cloud Run.
-- AWS Cognito protecting the frontend workflow and API requests.
-- Amazon API Gateway invoking the API Lambda.
-- API Lambda reserving uploads in DynamoDB and returning S3 presigned upload/read URLs.
-- Private S3 media bucket emitting object-created events to SQS.
-- Main Worker Lambda consuming SQS, validating checksums, generating image thumbnails, and calling
-  private Google Cloud Run inference using AWS-to-GCP Workload Identity Federation.
-- Google Cloud Storage model bundle and Artifact Registry container images.
-- DynamoDB single-table records for `MEDIA`, `CHECKSUM`, `TAG`, `THUMB`, query reservations, and
-  subscriptions.
-- SNS topic for tag-based email notifications.
+*Figure 1. Pacific BioArchive deployment and processing flow. AWS and Google Cloud service symbols
+use the providers' official architecture icon sets; source links and retrieval dates are recorded in
+`docs/assets/architecture/SOURCES.md`.*
 
 ## System Overview
 
@@ -87,4 +78,6 @@ Terraform state, or model weights.
 - AWS Lambda, API Gateway, Cognito, S3, SQS, SNS, DynamoDB, and ECR documentation.
 - Google Cloud Run, Cloud Storage, Artifact Registry, IAM Credentials, and Workload Identity
   Federation documentation.
+- AWS Architecture Icons, https://aws.amazon.com/architecture/icons/ (accessed 29 August 2026).
+- Google Cloud Architecture Icons, https://cloud.google.com/icons (accessed 29 August 2026).
 - FIT5225 2026 S2 Assignment 2 brief and marking rubric.

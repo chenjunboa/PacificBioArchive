@@ -1,7 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const e2eDataDir = process.env.PBA_E2E_DATA_DIR ?? `../.local-e2e-data-${Date.now()}`
-
 export default defineConfig({
   testDir: './e2e',
   testMatch: /archive\.spec\.ts/,
@@ -21,7 +19,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `APP_ENV=local LOCAL_DATA_DIR=${e2eDataDir} LABELS_PATH=../labels.txt ../.venv/bin/python -m uvicorn app.main:app --app-dir ../services/api --host 127.0.0.1 --port 8000`,
+      command: 'node e2e/start-local-api.mjs',
       url: 'http://127.0.0.1:8000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
