@@ -5,9 +5,19 @@ demo rehearsal, and final report preparation.
 
 ## Current status
 
-No live-cloud evidence files are committed here yet. The repository has the local E2E workflow,
-cloud smoke runner, demo script, and acceptance checklist ready, but final report claims about the
-deployed system still need evidence from the actual AWS/GCP deployment.
+Live-cloud smoke evidence was produced on 2026-08-29 after the API and Worker Lambda images were
+updated from `main` and the fallback `member3-worker` SQS trigger was disabled.
+
+```text
+npm run test:e2e:cloud evidence run 1: passed in 26.0s, mediaId 6e10a04c-9bb6-4128-bf83-6b4cec8daa38
+npm run test:e2e:cloud evidence run 2: passed in 24.2s, mediaId 6f32f21a-d6e0-41af-b398-d9070430eed5
+DynamoDB cleanup check after both successful runs: Count 0
+Worker Lambda recent invocations completed successfully; media DLQ message count remained 0.
+```
+
+No redacted screenshot or exported report files are committed here yet. Before final submission,
+copy or export the Playwright report, videos, screenshots, and CloudWatch/DynamoDB snippets that the
+group report will cite.
 
 ## Suggested files
 

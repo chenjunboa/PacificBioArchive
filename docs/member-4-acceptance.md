@@ -14,7 +14,7 @@ verification before the assignment report can claim final acceptance.
 | Media management | Complete locally | Owner-only controls, bulk tag add/remove, delete confirmation, and delete result messaging are implemented. |
 | Notifications UI | Complete locally | Subscribe and unsubscribe actions show success/failure messages and explain SNS email confirmation. |
 | Local E2E | Complete | `npm run test:e2e` covers login, image upload to READY, duplicate 409, tag query, species query, thumbnail query, file query, tag add/remove, non-owner 403, delete, and signed-out 401. |
-| Cloud smoke runner | Prepared | `npm run test:e2e:cloud` runs against a deployed URL when the required `PBA_CLOUD_*` environment variables are provided. |
+| Cloud smoke runner | Complete in live cloud | `npm run test:e2e:cloud` runs against the deployed Cloud Run frontend and protected AWS API when the required `PBA_CLOUD_*` environment variables are provided. |
 | Demo script | Complete | `docs/demo-script.md` contains the minute-by-minute rehearsal script, demo image checksums, evidence checklist, cold-start fallback, and cleanup checklist. |
 
 ## Latest local validation
@@ -30,6 +30,26 @@ npm run build: passed
 terraform -chdir=infra validate: passed
 ```
 
+## Latest live cloud validation
+
+Run on 2026-08-29 after `main` was deployed to the AWS Lambda API and worker images:
+
+```text
+API Lambda image digest: sha256:725287c1f9bb6198a625646eaaf023a0d5ac6fffb0291878d4017a42e1f98c57
+Worker Lambda image digest: sha256:295ed696f139bbfcb265173fbd0624a72050ce9dfde8d5c16f83576485a466ec
+member3-worker SQS event source mapping 4b479c2d-0b63-4d2b-9bee-ecf00684cd68: Disabled
+SQS DLQ ApproximateNumberOfMessages: 0
+web npm run build: passed
+npm run test:e2e:cloud evidence run 1: passed in 26.0s, mediaId 6e10a04c-9bb6-4128-bf83-6b4cec8daa38
+npm run test:e2e:cloud evidence run 2: passed in 24.2s, mediaId 6f32f21a-d6e0-41af-b398-d9070430eed5
+DynamoDB cleanup check after both successful runs: 0 records remaining for those media IDs
+```
+
+The live smoke runner signs in through the deployed frontend, uploads a real image, waits for the
+deployed API to return `READY` with the expected SpeciesNet tag, verifies tag/count and thumbnail
+reverse queries through the protected API using the same Cognito token, deletes the uploaded media,
+checks the media endpoint returns 404, and signs out.
+
 ## Still required before final submission
 
 These items need the live AWS/GCP deployment, real Cognito users, or team review. Do not mark them
@@ -37,8 +57,6 @@ as complete in the report until the evidence exists.
 
 | Remaining item | Owner | Blocking reason |
 |---|---|---|
-| Cloud smoke run 1 | Member 4 plus AWS/GCP account holder | Requires deployed frontend/API/worker/inference and a verified Cognito test user. |
-| Cloud smoke run 2 | Member 4 plus AWS/GCP account holder | Assignment handoff asks for the critical cloud path to run twice successfully. |
 | Real short video evidence | Member 3 or Member 4 | A known-good MP4/MOV sample and deployed worker logs are needed. |
 | SNS confirmation screenshot | Member 4 | Requires a real email subscription and mailbox confirmation flow. |
 | Redacted screenshots/logs | All members | Use `docs/evidence/member-4/README.md` for Member 4 naming and redaction rules. Each report claim needs matching evidence without tokens, passwords, OTPs, presigned URL query strings, or account secrets. |
@@ -51,9 +69,9 @@ as complete in the report until the evidence exists.
 
 ## Recommended next order
 
-1. Run `npm run test:e2e` once more from clean `main` immediately before cloud rehearsal.
-2. Ask the AWS/GCP account holder to confirm the deployed URLs and Cognito test users.
-3. Run `docs/cloud-smoke-evidence.md` twice, then execute `docs/demo-script.md`, saving redacted screenshots or Playwright videos under `docs/evidence/member-4/`.
+1. Capture or export redacted evidence artifacts from the two successful cloud smoke runs.
+2. Add the remaining video evidence if the team wants to claim MP4/MOV processing in the report.
+3. Capture SNS subscription confirmation evidence if the team wants to claim the email notification workflow.
 4. Fill the group report with only verified claims.
 5. Ask Member 1 to review the release candidate.
 6. Create `release-candidate-1`, then final `v1.0.0` only after all members confirm.
