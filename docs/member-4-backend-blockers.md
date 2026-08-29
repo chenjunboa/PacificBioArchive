@@ -96,3 +96,12 @@ Remaining validation:
 - React production build passed locally after `npm ci`.
 - Terraform `fmt -check` and `validate` passed after `terraform init -backend=false`.
 - Real AWS/GCP verification is still required before claiming cloud acceptance in the report.
+
+## Superseded validation note
+
+This blocker list is preserved as the original handoff audit. The live cloud acceptance boundary has
+since moved forward: `docs/member-4-acceptance.md` and `docs/evidence/member-4/` record two
+successful deployed image smoke runs and one successful deployed short MP4 smoke run on 2026-08-29.
+The remaining final-submission items are SNS mailbox confirmation, evidence export/redaction,
+official architecture diagram insertion, member identity details, team review, release tags, and
+final PDF submission.

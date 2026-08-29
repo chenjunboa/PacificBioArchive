@@ -17,9 +17,10 @@ Short MP4 cloud smoke: passed in 1.7m, mediaId b4c56c61-e229-4aa3-8539-8ff6e1e8f
 Short MP4 cleanup check: Count 0; media DLQ message count remained 0.
 ```
 
-The sanitized validation summaries are committed as `13-video-cloud-smoke-redacted.md` and
-`14-image-cloud-smoke-redacted.md`. Before final submission, also export any Playwright report,
-screenshots, and CloudWatch/DynamoDB snippets that the group report will cite.
+The sanitized validation summaries are committed as `13-video-cloud-smoke-redacted.md`,
+`14-image-cloud-smoke-redacted.md`, and `15-sns-confirmation-pending-redacted.md`. Before final
+submission, also export any Playwright report, screenshots, and CloudWatch/DynamoDB snippets that
+the group report will cite.
 
 ## Suggested files
 
@@ -41,6 +42,7 @@ Use stable numbered names so the group report can cite each artifact clearly:
 | `12-delete-cleanup-redacted.png` | Delete workflow and cleanup evidence. |
 | `13-video-cloud-smoke-redacted.md` | Short MP4 upload, inference, tag query, delete, and cleanup evidence. |
 | `14-image-cloud-smoke-redacted.md` | Two repeatable image cloud smoke runs with tag/thumbnail queries and cleanup evidence. |
+| `15-sns-confirmation-pending-redacted.md` | Current SNS email confirmation state and the remaining mailbox action. |
 
 ## Redaction rules
 

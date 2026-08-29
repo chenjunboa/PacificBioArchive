@@ -15,7 +15,8 @@ AWS API Gateway、AWS→GCP WIF、私有 Cloud Run inference、真实模型、�
 第三位成员的 worker 交接和第四位成员的本地 UI/E2E 验证已经合并到 `main`。第四位成员已在
 真实云端完成两轮图片冒烟测试和一次短视频 MP4 冒烟测试；脱敏截图/日志整理、SNS 邮件确认、
 第一位成员 release-candidate 审查和最终 `v1.0.0` 标签仍需在提交前完成。
-第四位成员当前验收边界见 [member-4-acceptance.md](docs/member-4-acceptance.md)。
+第四位成员当前验收边界见 [member-4-acceptance.md](docs/member-4-acceptance.md)，最终提交前
+剩余人工确认项见 [final-submission-readiness.md](docs/final-submission-readiness.md)。
 
 ## 四个人只看各自的文档
 
