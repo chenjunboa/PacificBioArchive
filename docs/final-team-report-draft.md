@@ -50,7 +50,7 @@ delete, 404 after deletion, and zero DLQ messages.
 
 ## User Guide
 
-1. Open the deployed Cloud Run web URL.
+1. Open the deployed Cloud Run web URL: https://pacific-bioarchive-prototype-web-k5t5pat3lq-uc.a.run.app/
 2. Register or sign in with a verified Cognito account.
 3. Upload a JPG, JPEG, PNG, MP4, or MOV file. Images must be 20 MB or smaller; videos must be 100 MB
    or smaller and 60 seconds or shorter.
