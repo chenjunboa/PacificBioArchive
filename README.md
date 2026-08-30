@@ -1,76 +1,208 @@
-# Pacific BioArchive 小组作业仓库
+# Pacific BioArchive
 
-这是 FIT5225 Assignment 2 的四人接力式开发仓库。`main` 当前保存第一位成员完成并验证过的
-本地原型；第二位成员的已部署云端版本位于 `member-2/cloud-deployment`，合并与正式交接完成后
-再更新 `handoff-2-cloud` 标签。
+Pacific BioArchive is a multi-cloud, serverless wildlife media platform developed for FIT5225 Assignment 2. Authenticated users can upload images and videos, automatically identify wildlife species, search the shared archive, manage tags, delete their own media, and subscribe to tag-based email notifications.
 
-## 当前状态
+The production solution combines AWS and Google Cloud. AWS provides authentication, API, storage, event processing, metadata, and notifications; Google Cloud hosts the private ML inference service and the public React web application.
 
-已经完成并验证：React 页面、Cognito 注册登录、DynamoDB/S3 云端边界、SQS Lambda Worker、
-AWS API Gateway、AWS→GCP WIF、私有 Cloud Run inference、真实模型、四个容器镜像、Terraform
-基础与 compute 资源、13 项自动测试、前端构建和 GitHub Actions 三项检查。
+> This is a private academic repository. Do not redistribute the source code, reports, credentials, model files, or deployment details.
 
-第二位成员已在真实 AWS/GCP 环境完成图片上传与推理端到端验证。镜像 digest、资源清单、费用
-风险、清理责任和脱敏验收结果见 [member-2-delivery.md](docs/member-2-delivery.md)。
-第三位成员的 worker 交接和第四位成员的本地 UI/E2E 验证已经合并到 `main`。第四位成员已在
-真实云端完成两轮图片冒烟测试、一次短视频 MP4 冒烟测试和 SNS 邮件确认；最终 `v1.0.0`
-标签仍需在全员提交前确认后创建。
-第四位成员当前验收边界见 [member-4-acceptance.md](docs/member-4-acceptance.md)，最终提交前
-剩余人工确认项见 [final-submission-readiness.md](docs/final-submission-readiness.md)。
+## Live Application
 
-最终团队报告、Member 1 与 Member 4 个人报告位于 [`output/final/`](output/final/)。
+- Web application: <https://pacific-bioarchive-prototype-web-k5t5pat3lq-uc.a.run.app/>
+- Region: AWS `us-east-1` and Google Cloud `us-central1`
+- Access: a verified Cognito account is required for all application features
 
-## 四个人只看各自的文档
+The Cloud Run frontend is publicly reachable, while the inference service remains private. AWS Lambda invokes inference through Workload Identity Federation, so no long-lived Google Cloud service-account key is stored in the application.
 
-| 成员 | 工作内容 | 执行文档 |
+## Architecture
+
+![Pacific BioArchive multi-cloud architecture](docs/assets/architecture/pacific-bioarchive-architecture.png)
+
+The editable SVG and official icon sources are available in [`docs/assets/architecture/`](docs/assets/architecture/).
+
+### Processing flow
+
+1. The browser calculates a SHA-256 checksum and requests an upload reservation.
+2. The API performs a conditional DynamoDB write to prevent duplicate uploads.
+3. The browser uploads the media directly to S3 using a short-lived presigned request.
+4. An S3 event is delivered through SQS to the worker Lambda.
+5. Images receive aspect-ratio-preserving JPEG thumbnails; videos are sampled at exactly one frame per second.
+6. The worker calls the private Cloud Run inference service for animal detection and species classification.
+7. Metadata, tag counts, ownership, thumbnail mappings, and processing status are stored in DynamoDB.
+8. Matching SNS subscriptions are notified when watched tags are added or updated.
+
+Failed queue messages are retried and can be moved to a dead-letter queue. Temporary query uploads are deleted after execution and are never added to the media archive.
+
+## Features
+
+- Cognito sign-up, email verification, sign-in, sign-out, and JWT-protected APIs
+- Checksum-based global upload deduplication, including concurrent upload protection
+- JPG, JPEG, PNG, MP4, and MOV handling
+- Image thumbnail generation and one-frame-per-second video sampling
+- Versioned ML model loading through an external manifest
+- Multi-tag AND queries with minimum species counts
+- Species-only search
+- Thumbnail-to-original reverse lookup
+- Query-by-file without permanent storage
+- Bulk tag addition and removal
+- Idempotent media deletion with ownership enforcement
+- Tag-based SNS email subscriptions
+- Responsive React UI for upload, search, media management, and notifications
+
+## Technology Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React, TypeScript, Vite, AWS Amplify Auth |
+| AWS | Cognito, API Gateway, Lambda, S3, SQS/DLQ, DynamoDB, SNS, ECR |
+| Google Cloud | Cloud Run, Cloud Storage, Artifact Registry, Workload Identity Federation |
+| Backend | Python 3.12, FastAPI, Pydantic, Boto3 |
+| ML | MegaDetector and SpeciesNet-compatible inference pipeline |
+| Infrastructure | Terraform |
+| Local development | Docker Compose and a local-only JWT issuer |
+| Quality | Pytest, Ruff, Playwright, GitHub Actions |
+
+## Repository Layout
+
+```text
+.
+├── services/
+│   ├── api/          # FastAPI application and Lambda entry point
+│   ├── worker/       # SQS media-processing worker
+│   └── inference/    # Cloud Run inference service
+├── web/              # React and TypeScript frontend
+├── infra/            # AWS and Google Cloud Terraform
+├── scripts/          # Model bundle preparation utilities
+├── docs/             # Handoffs, evidence, demo guide, and report sources
+├── output/final/     # Submission-ready PDF and DOCX reports
+├── docker-compose.yml
+├── labels.txt        # Authoritative 46-species label order
+└── model-manifest.json
+```
+
+## Local Quick Start
+
+### Prerequisites
+
+- Docker Desktop with Docker Compose
+- Alternatively: Python `3.12`, Node.js `22`, and `uv`
+
+### Run the complete local stack
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- Web UI: <http://localhost:5173>
+- API documentation: <http://localhost:8000/docs>
+- API health check: <http://localhost:8000/health>
+
+Local mode accepts a valid email format and issues a development JWT. This issuer is available only when `APP_ENV=local`; the cloud deployment uses Cognito and does not expose the development token endpoint.
+
+The default Compose configuration uses deterministic stub inference so the complete workflow can be tested without downloading large model weights or using cloud resources.
+
+### Stop the stack
+
+```bash
+docker compose down
+```
+
+Use `docker compose down -v` only when local development data may be permanently removed.
+
+## Development and Testing
+
+### Backend
+
+```bash
+uv sync --extra dev
+uv run ruff check services/api services/inference services/worker
+uv run pytest -q
+```
+
+### Frontend
+
+```bash
+cd web
+npm ci
+npm run build
+npm run test:e2e
+```
+
+GitHub Actions runs backend linting and tests, the frontend production build, Playwright end-to-end tests, and container builds on pushes and pull requests. The latest `main` workflow completed successfully.
+
+## API Summary
+
+All routes below use the `/api/v1` prefix. Except for the health check and the local-only development token route, cloud business endpoints require a valid Cognito JWT.
+
+| Method | Endpoint | Purpose |
 |---|---|---|
-| 第一位 | 本地原型、接口基线、仓库和第一次交接 | [member-1-prototype.md](docs/member-1-prototype.md) |
-| 第二位 | AWS/GCP 部署、Cognito、API Gateway、WIF | [member-2-cloud.md](docs/member-2-cloud.md) |
-| 第三位 | DynamoDB、S3/SQS worker、ML、查询、标签和删除 | [member-3-backend.md](docs/member-3-backend.md) |
-| 第四位 | React 完善、云端集成、E2E、演示和最终验收 | [member-4-release.md](docs/member-4-release.md) |
+| `POST` | `/uploads/init` | Reserve a deduplicated upload and return a presigned request |
+| `GET` | `/media/{mediaId}` | Return processing status, tags, and temporary media URLs |
+| `POST` | `/queries/tags` | Query multiple tags using AND and minimum counts |
+| `POST` | `/queries/species` | Query a species with a minimum count of one |
+| `POST` | `/queries/thumbnail` | Resolve a thumbnail to its original image |
+| `POST` | `/queries/file/init` | Reserve a temporary query upload |
+| `POST` | `/queries/file/{queryId}/execute` | Detect query-file tags and find matching archive items |
+| `POST` | `/tags/bulk` | Add or remove tags from multiple owned media items |
+| `DELETE` | `/media` | Delete owned originals, thumbnails, indexes, and records |
+| `POST` | `/subscriptions` | Subscribe an email address to a normalized tag |
+| `DELETE` | `/subscriptions/{tag}` | Remove a tag subscription |
+| `GET` | `/species` | Return the supported species list |
 
-第二位成员进行真实部署时同时使用
-[member-2-deployment-runbook.md](docs/member-2-deployment-runbook.md)，其中列出账号本人必须
-完成的步骤、镜像命令、验证证据和第三阶段交接边界。
+Tags are normalized using Unicode NFC, lowercasing, trimming, and replacement of whitespace or hyphens with underscores. Empty tags and tags longer than 64 characters are rejected. Authenticated users may query the shared archive, but only an uploader may change tags or delete that uploader's media.
 
-`docs/ai-usage-zh.md` 是作业要求的生成式 AI 使用记录，每个人工作完成后补一条，不能删除。
+## Deployment
 
-## 所有人必须遵守的 Git 规则
+Terraform definitions for AWS and Google Cloud are stored in [`infra/`](infra/). The detailed deployment and handoff instructions are intentionally kept in the private documentation:
 
-1. 从上一位成员的交付标签新建自己的分支，不能直接在 `main` 开发。
-2. 使用自己的 GitHub 账号提交，禁止共用账号或代替别人提交。
-3. 完成后发起 Pull Request，让下一位成员实际运行后再接受交接。
-4. 不得提交 `.env`、云凭证、MFA、Terraform state、上传文件、预签名 URL 或模型权重。
-5. 遇到阻塞，用仓库的 `Handoff blocker` 模板建立 Issue，不能口头跳过。
-6. 修改接口、数据结构或安全规则必须写进 PR，不能静默修改。
+- [`docs/member-2-deployment-runbook.md`](docs/member-2-deployment-runbook.md)
+- [`docs/member-2-delivery.md`](docs/member-2-delivery.md)
+- [`docs/final-submission-readiness.md`](docs/final-submission-readiness.md)
 
-## 固定接口，不要随意改名
+Do not apply Terraform without confirming the active AWS account, Google Cloud project, billing status, regions, resource names, and cleanup responsibility. Never commit `.env` files, Terraform state, passwords, MFA codes, JWTs, cloud tokens, presigned URLs, or unredacted subscription links.
 
-所有业务接口使用 `/api/v1`，云端除健康检查外都必须验证 Cognito JWT。
+## Validation Status
 
-| 方法 | 地址 | 作用 |
-|---|---|---|
-| POST | `/uploads/init` | 去重并取得上传地址 |
-| GET | `/media/{mediaId}` | 查询处理状态和媒体信息 |
-| POST | `/queries/tags` | 多标签 AND 和最低数量查询 |
-| POST | `/queries/species` | 单一物种查询 |
-| POST | `/queries/thumbnail` | 缩略图反查原文件 |
-| POST | `/queries/file/init` | 取得临时查询文件上传地址 |
-| POST | `/queries/file/{queryId}/execute` | 识别临时文件并查询 |
-| POST | `/tags/bulk` | 批量增加或删除标签 |
-| DELETE | `/media` | 删除当前用户拥有的媒体 |
-| POST | `/subscriptions` | 订阅标签通知 |
-| DELETE | `/subscriptions/{tag}` | 取消订阅 |
-| GET | `/species` | 返回模型支持的 46 个物种 |
+The final cloud validation includes:
 
-标签统一规则：去掉两端空格、Unicode NFC、小写、空格和连字符替换为下划线；拒绝空标签
-和超过 64 个字符的标签。认证用户可查询共享档案，但只能修改和删除自己上传的媒体。
+- two live image workflows from Cognito sign-in through upload, S3, SQS, Lambda, private GCP inference, search, reverse thumbnail lookup, deletion, and sign-out;
+- one live three-second MP4 workflow through upload, processing, inference, search, deletion, and sign-out;
+- DynamoDB cleanup checks with no remaining records for deleted smoke-test media;
+- an empty media dead-letter queue after the successful runs;
+- a confirmed SNS email subscription; and
+- successful backend, web, E2E, and container CI jobs.
 
-## 时间安排
+Detailed, redacted evidence is indexed in [`docs/cloud-smoke-evidence.md`](docs/cloud-smoke-evidence.md) and [`docs/evidence/member-4/`](docs/evidence/member-4/).
 
-- 8月23日：第一位成员交付 `handoff-1-local`。
-- 8月24日：第二位成员交付 `handoff-2-cloud`。
-- 8月25日：第三位成员交付 `handoff-3-core-complete`。
-- 8月26日：第四位成员交付 `release-candidate-1`。
-- 8月27日至29日：全员修复、撰写各自报告章节、演练两次。
-- 8月30日：最终检查后标记 `v1.0.0` 并提交。
+## Team Contributions
+
+| Member | Student ID | Primary responsibility |
+|---|---:|---|
+| Junbo Chen | 36970271 | Local prototype, API baseline, React UI, inference scaffold, Terraform skeleton, repository structure, and initial validation |
+| Bingyi Wang | 36668397 | AWS/GCP deployment, Cognito, API Gateway, Lambda images, S3, SQS/DLQ, DynamoDB, SNS, Cloud Run, model bundle, and WIF |
+| Duo Chen | 36668222 | S3-to-SQS worker integration, Lambda fallback, media processing, and backend data/query/delete planning |
+| Bo Pang | 36969842 | Final UI and cloud integration, tag/thumbnail index stabilization, E2E and cloud smoke testing, notifications, evidence, and reports |
+
+All four members contributed through their own repository identities. The formal contribution percentages and assessed project elements are recorded in the final team report.
+
+## Reports and Demonstration
+
+- [Final team report](output/final/Pacific-BioArchive-Team-Report.pdf)
+- [Member 1 individual report](output/final/Junbo-Chen-Individual-Report.pdf)
+- [Member 4 individual report](output/final/Bo-Pang-Individual-Report.pdf)
+- [Demonstration script](docs/demo-script.md)
+
+The system demonstration is a mandatory assessment component. Every team member must attend and be able to explain the architecture, implementation decisions, individual contribution, and relevant failure handling.
+
+## Academic Integrity and AI Disclosure
+
+Generative AI was used selectively for planning, implementation assistance, testing support, documentation, and review. All generated suggestions were inspected, adapted, and validated by team members. The detailed usage record is maintained in [`docs/ai-usage-zh.md`](docs/ai-usage-zh.md), and the required disclosure is included in the final reports.
+
+## Release State
+
+- `handoff-1-local`: reviewed local prototype handoff
+- `handoff-2-cloud`: cloud deployment handoff
+- `release-candidate-1`: reviewed release candidate with successful CI
+- `v1.0.0`: reserved for final approval by all team members
