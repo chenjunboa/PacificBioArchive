@@ -1,13 +1,14 @@
 # Member 4 SNS confirmation status
 
-Date: 2026-08-29
+Date: 2026-08-30
 
 Purpose: record the current state of tag-based email notification evidence.
 
 ## Current state
 
 An AWS SNS email subscription request was sent for the Pacific BioArchive tag notification topic to
-the Member 4 Monash email address.
+the Member 4 Monash email address. The request was re-sent on 2026-08-30 after refreshing the AWS
+CLI session, but the topic still reports the subscription as awaiting mailbox confirmation.
 
 ```text
 Endpoint: bpan0043@student.monash.edu
