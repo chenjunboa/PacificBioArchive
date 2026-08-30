@@ -46,7 +46,8 @@ Worker Lambda images and disabling the fallback `member3-worker` trigger. Two im
 passed through Cognito sign-in, deployed frontend upload, S3/SQS/Lambda/GCP inference, tag query,
 thumbnail reverse query, delete, 404 after deletion, sign-out, and zero DynamoDB residue. A separate
 3 second MP4 smoke run passed with `video/mp4`, the expected `alectura_lathami` tag, tag query,
-delete, 404 after deletion, and zero DLQ messages.
+delete, 404 after deletion, and zero DLQ messages. The Member 4 SNS email subscription was confirmed
+on 30 August 2026 and rechecked by AWS CLI with a concrete subscription ARN.
 
 ## User Guide
 
@@ -58,8 +59,8 @@ delete, 404 after deletion, and zero DLQ messages.
    thumbnail URL.
 5. Use Search to query by tag/count, species, thumbnail URL, or temporary query file.
 6. Use Manage to add/remove tags or delete owned media.
-7. Use Notifications to subscribe/unsubscribe to species tag email updates, then confirm the SNS
-   email if demonstrating notifications.
+7. Use Notifications to subscribe/unsubscribe to species tag email updates. For the submitted
+   evidence, the Member 4 mailbox SNS subscription has already been confirmed.
 8. Sign out and confirm protected endpoints reject unauthenticated access.
 
 ## Generative AI Statement
