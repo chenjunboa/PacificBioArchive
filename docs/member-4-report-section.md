@@ -86,10 +86,9 @@ and remaining final-submission evidence tasks.
 ## Remaining evidence boundary
 
 The repository now contains the implemented UI, local E2E test, cloud smoke runner, release
-documentation, two successful live image smoke runs, and one successful live short MP4 smoke run.
-The final report should still avoid claiming SNS email confirmation until a mailbox confirmation
-screenshot exists. The team also still needs to export/redact report evidence, complete first-member
-review, and create `release-candidate-1` or the final `v1.0.0` tag only after all members confirm.
+documentation, two successful live image smoke runs, one successful live short MP4 smoke run, and
+confirmed SNS email subscription evidence for the Member 4 mailbox. The team still needs all members
+to accept the final state before creating the final `v1.0.0` tag.
 
 ## Commits to cite
 

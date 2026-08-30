@@ -24,16 +24,18 @@ Last updated: 2026-08-30
   under `docs/assets/architecture/`, with provider source links recorded in `SOURCES.md`.
 - Member 1 reviewed the release candidate and fixed the Windows Playwright API startup command;
   local Playwright E2E now passes on Windows as well as in GitHub Actions on Linux.
+- The Member 4 SNS email subscription was confirmed on 2026-08-30 and the AWS CLI check returned a
+  concrete subscription ARN.
 
-## Still externally blocked
+## Final Human And Team Checks
 
-These items require a human account holder or team approval and should not be marked complete until
-that happens.
+These items require a human account holder, individual submission ownership, or team approval and
+should not be marked complete until that happens.
 
 | Item | Status | Required owner action |
 |---|---|---|
-| SNS email confirmation | Pending | `bpan0043@student.monash.edu` has a pending AWS SNS confirmation email. Open the email and click `Confirm subscription`, then re-run the SNS status check. |
-| SNS screenshot | Pending | After confirmation, capture a redacted screenshot showing the confirmed subscription or confirmation email. Hide token-like links and private details. |
+| SNS email confirmation | Complete | `bpan0043@student.monash.edu` was confirmed on the AWS SNS confirmation page and verified by CLI on 2026-08-30. |
+| SNS screenshot | Complete | Confirmation screenshot is saved as `docs/evidence/member-4/11-sns-confirmation-redacted.png`; no full confirmation link is recorded. |
 | Team member names and student IDs | Complete | Team supplied and verified all four formal names and student IDs on 30 August 2026. |
 | Member 1 review | Complete | Review record: `docs/member-1-release-review.md`. |
 | `release-candidate-1` tag | Complete | Tag points to reviewed commit `95a06e2`; all four GitHub Actions jobs passed. |

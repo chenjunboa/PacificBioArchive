@@ -54,15 +54,12 @@ deletes the uploaded media, checks the media endpoint returns 404, and signs out
 
 ## Still required before final submission
 
-These items need the live AWS/GCP deployment, real Cognito users, or team review. Do not mark them
-as complete in the report until the evidence exists.
+These items need final team review or submission ownership. Do not mark them as complete in the
+report until the evidence exists.
 
 | Remaining item | Owner | Blocking reason |
 |---|---|---|
-| SNS confirmation screenshot | Member 4 | Requires a real email subscription and mailbox confirmation flow. |
 | Redacted screenshots/logs | All members | Use `docs/evidence/member-4/README.md` for Member 4 naming and redaction rules. Each report claim needs matching evidence without tokens, passwords, OTPs, presigned URL query strings, or account secrets. |
-| First-member review of release candidate | Member 1 | Required before creating the final release tag. |
-| `release-candidate-1` tag | Team representative after review | Should point to the accepted commit only after cloud smoke evidence and review. |
 | Final `v1.0.0` tag | Team representative after all checks | Should not be created before every member accepts the final state. |
 | Group report PDF | Team representative | Must include names, student IDs, private repository link, AI use statement, screenshots, and contribution evidence. |
 | Individual reports | Every member | Submitted separately through the individual link. |
@@ -70,9 +67,6 @@ as complete in the report until the evidence exists.
 
 ## Recommended next order
 
-1. Capture or export redacted evidence artifacts from the successful image and video cloud smoke runs.
-2. Capture SNS subscription confirmation evidence if the team wants to claim the email notification workflow.
-3. Keep the report claims aligned with the verified evidence and avoid claiming untested flows.
-4. Fill the group report with only verified claims.
-5. Ask Member 1 to review the release candidate.
-6. Create `release-candidate-1`, then final `v1.0.0` only after all members confirm.
+1. Keep the report claims aligned with the verified evidence and avoid claiming untested flows.
+2. Have all members review the final report and individual reports.
+3. Create final `v1.0.0` only after all members confirm.
